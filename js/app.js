@@ -13,7 +13,7 @@ if (!window.BASE) {
   window.BASE = localStorage.getItem('BACKEND_BASE') || 
     (isLocalhost 
       ? 'http://127.0.0.1:8000'
-      : 'https://ccs4thyear.com/ArtisanBreads/Backend');
+      : 'https://ccs4thyear.com/ArtisanBreads/Backend/');
 }
 
 function setBase(url) {
@@ -1731,3 +1731,4 @@ window.loadArtisanDashboard = loadArtisanDashboard;
 window.loadBreadDetail = loadBreadDetail;
 
 window.addToCartFromDetail = addToCartFromDetail;
+

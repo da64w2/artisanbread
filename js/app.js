@@ -1729,7 +1729,4 @@ window.loadOrders = loadOrders;
 window.cancelOrder = cancelOrder;
 window.loadArtisanDashboard = loadArtisanDashboard;
 window.loadBreadDetail = loadBreadDetail;
-
 window.addToCartFromDetail = addToCartFromDetail;
-
-

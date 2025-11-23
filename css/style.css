@@ -1,0 +1,235 @@
+/* Custom CSS for Artisan Bread Store */
+
+/* Page Management */
+.page {
+    display: none;
+}
+
+.page.active {
+    display: block;
+}
+
+/* Button Styles */
+.btn-primary {
+    background: linear-gradient(135deg, #f59e0b, #ea580c);
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #d97706, #c2410c);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3);
+}
+
+/* Hero Section */
+.hero-gradient {
+    background: linear-gradient(135deg, #f59e0b, #ea580c, #dc2626);
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-gradient::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.1)"/><circle cx="10" cy="60" r="0.5" fill="rgba(255,255,255,0.1)"/><circle cx="90" cy="40" r="0.5" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    opacity: 0.3;
+}
+
+
+
+/* Bread Cards */
+.bread-card {
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.bread-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.bread-card img {
+    transition: transform 0.3s ease;
+}
+
+.bread-card:hover img {
+    transform: scale(1.05);
+}
+
+/* Image Placeholder */
+.image-placeholder {
+    background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+}
+
+/* Filter Buttons */
+.filter-btn {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.filter-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.filter-btn.active {
+    background: linear-gradient(135deg, #f59e0b, #ea580c);
+}
+
+/* Auth Forms */
+.auth-form {
+    background: white;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.auth-form input:focus {
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+}
+
+/* Loading States */
+.loading {
+    display: none;
+}
+
+.loading.active {
+    display: inline-block;
+}
+
+/* Line Clamp for Text */
+.line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .hero-gradient h2 {
+        font-size: 2.5rem;
+    }
+    
+    .hero-gradient p {
+        font-size: 1.125rem;
+    }
+    
+    .filter-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.page.active {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #f59e0b, #ea580c);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #d97706, #c2410c);
+}
+
+/* Focus States for Accessibility */
+button:focus,
+input:focus,
+a:focus {
+    outline: 2px solid #f59e0b;
+    outline-offset: 2px;
+}
+
+/* Hover Effects */
+.nav button:hover,
+.auth-form button:hover {
+    transform: translateY(-1px);
+    transition: transform 0.2s ease;
+}
+
+/* Mobile Menu Animation */
+#mobileMenu {
+    transition: all 0.3s ease;
+    transform-origin: top;
+}
+
+#mobileMenu.hidden {
+    transform: scaleY(0);
+    opacity: 0;
+}
+
+#mobileMenu:not(.hidden) {
+    transform: scaleY(1);
+    opacity: 1;
+}
+
+/* Bread Category Tags */
+.bread-card .absolute.top-4.left-4 {
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+/* Price Styling */
+.bread-card .text-2xl.font-bold {
+    background: linear-gradient(135deg, #f59e0b, #ea580c);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Star Rating */
+.text-yellow-400 {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Form Input Icons */
+.auth-form .relative i {
+    transition: color 0.3s ease;
+}
+
+.auth-form input:focus + i {
+    color: #f59e0b;
+}
+
+/* Navigation Logo */
+.nav .w-10.h-10 {
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    transition: all 0.3s ease;
+}
+
+.nav .w-10.h-10:hover {
+    transform: rotate(5deg) scale(1.1);
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+}

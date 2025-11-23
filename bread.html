@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breads - Artisan Bread Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-2">
+                    <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full flex items-center justify-center">
+                        <i class="fas fa-bread-slice text-white text-lg"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold text-gray-800">Artisan Bread</h1>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="./bread.html" class="text-amber-600 font-semibold">Breads</a>
+                    <a href="./profile.html" id="profileNavBtn" class="text-gray-600 hover:text-amber-600 transition-colors auth-only" style="display: none;">Profile</a>
+                    <div id="authButtons" class="flex items-center space-x-3 guest-only" style="display: none;">
+                        <a href="./login.html" class="text-amber-600 hover:text-amber-700 transition-colors">Login</a>
+                        <a href="./register.html" class="btn-primary text-white px-4 py-2 rounded-lg">Sign Up</a>
+                    </div>
+                    <div id="userMenu" class="flex items-center space-x-3 auth-only" style="display: none;">
+                        <span class="text-gray-600">Welcome, <span id="userName"></span></span>
+                        <a href="profile.html" class="text-amber-600 hover:text-amber-700 transition-colors">
+                            <i class="fas fa-user"></i>
+                        </a>
+                        <button id="btnLogout" class="text-red-600 hover:text-red-700 transition-colors">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <button class="md:hidden text-gray-600" onclick="toggleMobileMenu()">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="hidden md:hidden bg-white border-t">
+            <div class="px-4 py-2 space-y-2">
+                <span class="block w-full text-left py-2 text-amber-600 font-semibold">Breads</span>
+                <a href="./profile.html" id="mobileProfileBtn" class="block w-full text-left py-2 text-amber-600 auth-only" style="display: none;">Profile</a>
+                <a href="./login.html" class="block w-full text-left py-2 text-amber-600 guest-only" style="display: none;">Login</a>
+                <a href="./register.html" class="block w-full text-left py-2 text-amber-600 guest-only" style="display: none;">Sign Up</a>
+                <button id="mobileLogoutBtn" class="block w-full text-left py-2 text-red-600 auth-only" style="display: none;">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Bread Management Section -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <div class="text-center mb-8">
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">Bread House</h2>
+            <p class="text-gray-600 max-w-2xl mx-auto">Manage your artisanal breads</p>
+        </div>
+
+        <!-- Add Bread Form -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Add New Bread</h3>
+            <form id="addForm" class="grid md:grid-cols-2 lg:grid-cols-5 gap-4 items-end" enctype="multipart/form-data">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                    <input name="name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="e.g. Sourdough" required>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Price</label>
+                    <input type="number" name="price" step="0.01" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="e.g. 5.99" required>
+                </div>
+                
+                <!-- Removed Type Field -->
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Image</label>
+                    <input type="file" name="image" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500" accept="image/*">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <textarea name="description" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="Describe the bread..." required></textarea>
+                </div>
+                
+                <div class="md:col-span-5">
+                    <button type="submit" class="btn-primary text-white px-6 py-2 rounded-md font-semibold w-full">
+                        <i class="fas fa-plus mr-2"></i>Add Bread
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Search and Breads Table -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <h3 class="text-2xl font-semibold text-gray-800">Bread Collection</h3>
+                <div class="w-full md:w-64">
+                    <input id="search" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="Search breads...">
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table id="tbl" class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                            <!-- Removed Type Column -->
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200"></tbody>
+                </table>
+            </div>
+
+            <pre id="breadsMsg" class="mt-4 p-4 bg-gray-100 rounded-md text-sm text-gray-700 font-mono hidden"></pre>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        // Mobile menu toggle function
+        function toggleMobileMenu() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.toggle('hidden');
+        }
+
+        // Simple auth state management for demo
+        let isAuthenticated = true; // Set to true since this is the breads page
+
+        function toggleAuthState() {
+            isAuthenticated = !isAuthenticated;
+            updateUI();
+        }
+
+        function updateUI() {
+            const guestElements = document.querySelectorAll('.guest-only');
+            const authElements = document.querySelectorAll('.auth-only');
+            
+            guestElements.forEach(el => {
+                el.style.display = isAuthenticated ? 'none' : 'block';
+            });
+            
+            authElements.forEach(el => {
+                el.style.display = isAuthenticated ? 'block' : 'none';
+            });
+        }
+
+        // Logout handlers are handled by app.js globally
+
+        // Initialize UI
+        updateUI();
+    </script>
+    <script>requireAuth();</script>
+</body>
+</html>

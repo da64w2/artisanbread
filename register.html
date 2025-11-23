@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Artisan Bread Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-2">
+                    <a href="index.html" class="flex items-center space-x-2">
+                        <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full flex items-center justify-center">
+                            <i class="fas fa-bread-slice text-white text-lg"></i>
+                        </div>
+                        <h1 class="text-2xl font-bold text-gray-800">Artisan Bread</h1>
+                    </a>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="index.html" class="text-gray-600 hover:text-amber-600 transition-colors">Home</a>
+                    <div id="authButtons" class="flex items-center space-x-3 guest-only" style="display: none;">
+                        <a href="login.html" class="text-amber-600 hover:text-amber-700 transition-colors">Login</a>
+                        <span class="btn-primary text-white px-4 py-2 rounded-lg font-semibold">Sign Up</span>
+                    </div>
+                    <div id="userMenu" class="flex items-center space-x-3 auth-only" style="display: none;">
+                        <span class="text-gray-600">Welcome, <span id="userName"></span></span>
+                        <a href="profile.html" class="text-amber-600 hover:text-amber-700 transition-colors">
+                            <i class="fas fa-user"></i>
+                        </a>
+                        <button id="btnLogout" class="text-red-600 hover:text-red-700 transition-colors">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <button class="md:hidden text-gray-600" onclick="toggleMobileMenu()">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="hidden md:hidden bg-white border-t">
+            <div class="px-4 py-2 space-y-2">
+                <a href="index.html" class="block w-full text-left py-2 text-gray-600">Home</a>
+                <a href="profile.html" id="mobileProfileBtn" class="block w-full text-left py-2 text-amber-600 auth-only" style="display: none;">Profile</a>
+                <a href="login.html" class="block w-full text-left py-2 text-amber-600 guest-only" style="display: none;">Login</a>
+                <span class="block w-full text-left py-2 text-amber-600 font-semibold">Sign Up</span>
+                <button id="mobileLogoutBtn" class="block w-full text-left py-2 text-red-600 auth-only" style="display: none;">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+
+
+    <!-- Register Page -->
+    <div class="min-h-screen flex items-center justify-center py-12 px-4">
+        <div class="auth-form max-w-md w-full p-8 rounded-2xl shadow-xl">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-bread-slice text-white text-2xl"></i>
+                </div>
+                <h2 class="text-3xl font-bold text-gray-800">Create Account</h2>
+                <p class="text-gray-600 mt-2">Join our artisan bread community</p>
+            </div>
+            
+            <form id="registerForm" onsubmit="return false;">
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-medium mb-2">Full Name</label>
+                    <div class="relative">
+                <input type="text" id="registerName" name="name" required 
+                       class="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                       placeholder="Enter your full name">
+                        <i class="fas fa-user absolute left-4 top-4 text-gray-400"></i>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-medium mb-2">Username</label>
+                    <div class="relative">
+                        <input type="text" id="registerUsername" name="username" required 
+                               class="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                               placeholder="Enter your username">
+                        <i class="fas fa-user absolute left-4 top-4 text-gray-400"></i>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-medium mb-2">Email Address</label>
+                    <div class="relative">
+                        <input type="email" id="registerEmail" name="email" required 
+                               class="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                               placeholder="Enter your email address">
+                        <i class="fas fa-envelope absolute left-4 top-4 text-gray-400"></i>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-medium mb-2">Contact Number</label>
+                    <div class="relative">
+                        <input type="tel" id="registerContact" name="contact_number" required 
+                               class="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                               placeholder="Enter your contact number">
+                        <i class="fas fa-phone absolute left-4 top-4 text-gray-400"></i>
+                    </div>
+                </div>
+                    
+                <div class="mb-4">
+                    <!-- <label class="block text-gray-700 text-sm font-medium mb-2">Profile Image (Optional)</label>
+                    <div class="relative">
+                        <input type="file" id="registerProfileImage" accept="image/*" onchange="previewProfileImage(this)"
+                               class="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
+                               placeholder="Choose profile image">
+                        <i class="fas fa-image absolute left-4 top-4 text-gray-400"></i>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Accepted formats: JPG, PNG, GIF. Max size: 5MB</p> -->
+                    
+                    <!-- Image Preview -->
+                    <div id="imagePreview" class="hidden mt-3">
+                        <img id="previewImg" src="" alt="Profile preview" class="w-20 h-20 rounded-lg object-cover border border-gray-300">
+                        <button type="button" onclick="removeProfileImage()" class="ml-2 text-red-600 hover:text-red-700 text-sm">
+                            <i class="fas fa-times"></i> Remove
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-medium mb-2">Password</label>
+                    <div class="relative">
+                        <input type="password" id="registerPassword" name="password" required 
+                               class="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                               placeholder="Create a password">
+                        <i class="fas fa-lock absolute left-4 top-4 text-gray-400"></i>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-gray-700 text-sm font-medium mb-2">Confirm Password</label>
+                    <div class="relative">
+                        <input type="password" id="confirmPassword" name="confirm_password" required
+                               class="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                               placeholder="Confirm your password">
+                        <i class="fas fa-lock absolute left-4 top-4 text-gray-400"></i>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <label class="flex items-center">
+                        <input type="checkbox" required class="rounded border-gray-300 text-amber-600 focus:ring-amber-500">
+                        <span class="ml-2 text-sm text-gray-600">I agree to the Terms of Service and Privacy Policy</span>
+                    </label>
+                </div>
+                
+                <button type="submit" class="btn-primary w-full py-3 rounded-lg font-medium text-white mb-4">
+                    <span class="loading" id="registerLoading">
+                        <i class="fas fa-spinner fa-spin mr-2"></i>
+                    </span>
+                    Create Account
+                </button>
+            </form>
+            
+            <p class="text-center text-gray-600">
+                Already have an account? 
+                <a href="login.html" class="text-amber-600 hover:text-amber-700 font-medium">Sign in</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Include the consolidated JavaScript file -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="js/app.js"></script>
+    
+    <script>
+        // Mobile menu toggle function
+        function toggleMobileMenu() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            if (mobileMenu) {
+                mobileMenu.classList.toggle('hidden');
+            }
+        }
+
+        // Override showPage function for single-page navigation
+        function showPage(pageName) {
+            switch(pageName) {
+                case 'home':
+                    window.location.href = 'index.html';
+                    break;
+                case 'products':
+                    window.location.href = 'products.html';
+                    break;
+                case 'profile':
+                    window.location.href = 'profile.html';
+                    break;
+                case 'register':
+                    // Already on register page
+                    break;
+                case 'login':
+                    window.location.href = 'login.html';
+                    break;
+                default:
+                    window.location.href = 'index.html';
+            }
+        }
+        
+        // Password confirmation validation
+        function validatePassword() {
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                showAlert('Error', 'Passwords do not match. Please make sure both passwords are identical.', 'error');
+                return false;
+            }
+            
+            if (password.length < 6) {
+                showAlert('Error', 'Password must be at least 6 characters long.', 'error');
+                return false;
+            }
+            
+            return true;
+        }
+        
+        // Password validation is now handled in app.js registration handler
+        // No need for duplicate handler here
+
+        // Profile image preview functionality
+        function previewProfileImage(input) {
+            const file = input.files[0];
+            const preview = document.getElementById('imagePreview');
+            const previewImg = document.getElementById('previewImg');
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    preview.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.classList.add('hidden');
+            }
+        }
+        
+        function removeProfileImage() {
+            document.getElementById('registerProfileImage').value = '';
+            document.getElementById('imagePreview').classList.add('hidden');
+            document.getElementById('previewImg').src = '';
+        }
+    </script>
+</body>
+</html>

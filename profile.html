@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Artisan Bread Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-2">
+                    <a href="index.html" class="flex items-center space-x-2">
+                        <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full flex items-center justify-center">
+                            <i class="fas fa-bread-slice text-white text-lg"></i>
+                        </div>
+                        <h1 class="text-2xl font-bold text-gray-800">Artisan Bread</h1>
+                    </a>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="bread.html" class="text-gray-600 hover:text-amber-600 transition-colors">Bread</a>
+                    <a href="profile.html" class="text-amber-600 font-semibold auth-only" style="display: none;">Profile</a>
+                    <div id="authButtons" class="flex items-center space-x-3 guest-only" style="display: none;">
+                        <a href="login.html" class="text-amber-600 hover:text-amber-700 transition-colors">Login</a>
+                        <a href="register.html" class="btn-primary text-white px-4 py-2 rounded-lg">Sign Up</a>
+                    </div>
+                    <div id="userMenu" class="flex items-center space-x-3 auth-only" style="display: none;">
+                        <span class="text-gray-600">Welcome, <span id="userName">Loading...</span></span>
+                        <button id="btnLogout" class="text-red-600 hover:text-red-700 transition-colors">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <button class="md:hidden text-gray-600" onclick="toggleMobileMenu()">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="hidden md:hidden bg-white border-t">
+            <div class="px-4 py-2 space-y-2">
+                <a href="index.html" class="block w-full text-left py-2 text-gray-600">Home</a>
+                <span class="block w-full text-left py-2 text-amber-600 font-semibold">Profile</span>
+                <a href="login.html" class="block w-full text-left py-2 text-amber-600 guest-only" style="display: none;">Login</a>
+                <a href="register.html" class="block w-full text-left py-2 text-amber-600 guest-only" style="display: none;">Sign Up</a>
+                <button id="mobileLogoutBtn" class="block w-full text-left py-2 text-red-600 auth-only" style="display: none;">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+
+
+    <!-- Profile Page -->
+    <div class="py-12">
+        <div class="max-w-4xl mx-auto px-4">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-gray-800 mb-4">My Profile</h2>
+                <p class="text-gray-600">Manage your account and preferences</p>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-xl p-8">
+                <div class="flex items-center space-x-6 mb-8">
+                    <div class="w-24 h-24 rounded-full overflow-hidden border-4 border-amber-200">
+                        <img id="profileImage" src="" alt="Profile" class="w-full h-full object-cover">
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-800" id="profileName">Loading...</h3>
+                        <p class="text-gray-600" id="profileUsername">Loading...</p>
+                        <form id="photoForm" class="mt-2" enctype="multipart/form-data">
+                            <div class="flex items-center space-x-4">
+                                <input type="file" name="avatar" accept="image/*" class="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100">
+                                <button type="submit" class="px-4 py-2 text-sm bg-amber-500 text-white rounded-full hover:bg-amber-600">Update Photo</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="grid md:grid-cols-1 gap-8">
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4">Account Information</h4>
+                        <form id="infoForm" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                                <input type="text" id="editName" name="name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                                <input type="text" id="editUsername" class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50" readonly>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                                <input type="email" id="editEmail" class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50" readonly>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Contact Number</label>
+                                <input type="tel" id="editContact" name="contact_number" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <button type="submit" class="btn-primary px-6 py-3 rounded-lg font-medium text-white">
+                                    Update Profile
+                                </button>
+                                <span id="profileMsg" class="ml-3 text-sm text-gray-600"></span>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include the consolidated JavaScript file -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="js/app.js"></script>
+    
+    <script>
+        // Mobile menu toggle function
+        function toggleMobileMenu() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.toggle('hidden');
+        }
+
+
+        // Logout handlers are handled by app.js globally
+
+        // Override showPage function for single-page navigation
+        function showPage(pageName) {
+            switch(pageName) {
+                case 'home':
+                    window.location.href = 'index.html';
+                    break;
+                case 'products':
+                    window.location.href = 'products.html';
+                    break;
+                case 'profile':
+                    // Already on profile page
+                    break;
+                case 'register':
+                    window.location.href = 'register.html';
+                    break;
+                case 'login':
+                    window.location.href = 'login.html';
+                    break;
+                default:
+                    window.location.href = 'index.html';
+            }
+        }
+        
+        // Initialize auth state and profile
+        document.addEventListener('DOMContentLoaded', function() {
+            // The requireAuth() function will handle authentication and redirect if needed
+            // No need for additional checks here
+        });
+    </script>
+    <script>
+        // Debug: Check what's happening with auth
+        console.log('Profile page loading...');
+        console.log('Current URL:', window.location.href);
+        console.log('Has token:', !!localStorage.getItem('token'));
+        
+        // Check auth status without calling requireAuth to avoid duplicate API calls
+        if (!localStorage.getItem('token')) {
+            console.log('No token found, redirecting to login...');
+            window.location.href = 'login.html';
+        } else {
+            console.log('Token found, profile handlers will load the profile...');
+            // Set auth UI immediately
+            setAuthUI(true);
+        }
+    </script>
+</body>
+</html>

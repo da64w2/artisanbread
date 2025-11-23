@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artisan Bread Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-2">
+                    <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full flex items-center justify-center">
+                        <i class="fas fa-bread-slice text-white text-lg"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold text-gray-800">Artisan Bread</h1>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="./index.html" class="text-amber-600 font-semibold">Home</a>
+                    <a href="./profile.html" id="profileNavBtn" class="text-gray-600 hover:text-amber-600 transition-colors auth-only" style="display: none;">Profile</a>
+                    <div id="authButtons" class="flex items-center space-x-3 guest-only" style="display: none;">
+                        <a href="./login.html" class="text-amber-600 hover:text-amber-700 transition-colors">Login</a>
+                        <a href="./register.html" class="btn-primary text-white px-4 py-2 rounded-lg">Sign Up</a>
+                    </div>
+                    <div id="userMenu" class="flex items-center space-x-3 auth-only" style="display: none;">
+                        <span class="text-gray-600">Welcome, <span id="userName"></span></span>
+                        <a href="profile.html" class="text-amber-600 hover:text-amber-700 transition-colors">
+                            <i class="fas fa-user"></i>
+                        </a>
+                        <button id="btnLogout" class="text-red-600 hover:text-red-700 transition-colors">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <button class="md:hidden text-gray-600" onclick="toggleMobileMenu()">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="hidden md:hidden bg-white border-t">
+            <div class="px-4 py-2 space-y-2">
+                <span class="block w-full text-left py-2 text-amber-600 font-semibold">Home</span>
+                <a href="./profile.html" id="mobileProfileBtn" class="block w-full text-left py-2 text-amber-600 auth-only" style="display: none;">Profile</a>
+                <a href="./login.html" class="block w-full text-left py-2 text-amber-600 guest-only" style="display: none;">Login</a>
+                <a href="./register.html" class="block w-full text-left py-2 text-amber-600 guest-only" style="display: none;">Sign Up</a>
+                <button id="mobileLogoutBtn" class="block w-full text-left py-2 text-red-600 auth-only" style="display: none;">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+
+
+    <!-- Home Page -->
+    <div id="homePage">
+        <!-- Hero Section -->
+        <section class="hero-gradient text-white py-20">
+            <div class="max-w-7xl mx-auto px-4 text-center">
+                <h2 class="text-5xl font-bold mb-6">Freshly Baked Daily</h2>
+                <p class="text-xl mb-8 max-w-2xl mx-auto">Discover our artisanal breads made with premium ingredients and traditional techniques passed down through generations.</p>
+                <a href="products.html" class="bg-white text-amber-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors inline-block">
+                    Explore Our Breads
+                </a>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="py-20">
+            <div class="max-w-7xl mx-auto px-4">
+                <div class="text-center mb-16">
+                    <h3 class="text-4xl font-bold text-gray-800 mb-4">Why Choose Our Bread?</h3>
+                    <p class="text-gray-600 max-w-2xl mx-auto">We're passionate about creating the perfect loaf using time-honored methods and the finest ingredients.</p>
+                </div>
+                
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="text-center p-6">
+                        <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-seedling text-amber-600 text-2xl"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold mb-3">Organic Ingredients</h4>
+                        <p class="text-gray-600">We source only the finest organic flours and natural ingredients for superior taste and nutrition.</p>
+                    </div>
+                    
+                    <div class="text-center p-6">
+                        <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-clock text-amber-600 text-2xl"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold mb-3">Traditional Methods</h4>
+                        <p class="text-gray-600">Our bakers follow time-tested techniques, allowing for proper fermentation and flavor development.</p>
+                    </div>
+                    
+                    <div class="text-center p-6">
+                        <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-heart text-amber-600 text-2xl"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold mb-3">Made with Love</h4>
+                        <p class="text-gray-600">Each loaf is crafted with care and attention to detail, ensuring perfect texture and flavor.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Include the consolidated JavaScript file -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="js/app.js"></script>
+    
+    <script>
+        // Mobile menu toggle function
+        function toggleMobileMenu() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.toggle('hidden');
+        }
+
+        // Simple auth state management for demo
+        let isAuthenticated = false; // Set to false initially, will be updated by requireAuth()
+
+        function toggleAuthState() {
+            isAuthenticated = !isAuthenticated;
+            updateUI();
+        }
+
+        function updateUI() {
+            const guestElements = document.querySelectorAll('.guest-only');
+            const authElements = document.querySelectorAll('.auth-only');
+            
+            guestElements.forEach(el => {
+                el.style.display = isAuthenticated ? 'none' : 'block';
+            });
+            
+            authElements.forEach(el => {
+                el.style.display = isAuthenticated ? 'block' : 'none';
+            });
+        }
+
+        // Logout handlers are handled by app.js globally
+
+        // Initialize UI - will be updated by requireAuth()
+        updateUI();
+    </script>
+    
+</body>
+</html>
+

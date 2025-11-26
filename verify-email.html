@@ -137,7 +137,11 @@
                 
                 try {
                     console.log('Verifying email with:', { email, otpCode });
-                    const response = await axios.post(`${window.BASE || 'http://127.0.0.1:8000'}/api/auth/verify-email`, {
+                    // Fix double slash issue - ensure proper URL construction
+                    const base = (window.BASE || 'http://127.0.0.1:8000').replace(/\/$/, ''); // Remove trailing slash
+                    const verifyUrl = `${base}/api/auth/verify-email`;
+                    console.log('Verification URL:', verifyUrl);
+                    const response = await axios.post(verifyUrl, {
                         email: email,
                         otp_code: otpCode
                     }, {
@@ -178,7 +182,11 @@
                 }
                 
                 try {
-                    const response = await axios.post(`${window.BASE || 'http://127.0.0.1:8000'}/api/auth/resend-otp`, {
+                    // Fix double slash issue - ensure proper URL construction
+                    const base = (window.BASE || 'http://127.0.0.1:8000').replace(/\/$/, ''); // Remove trailing slash
+                    const resendUrl = `${base}/api/auth/resend-otp`;
+                    console.log('Resend OTP URL:', resendUrl);
+                    const response = await axios.post(resendUrl, {
                         email: email
                     }, {
                         withCredentials: true,

@@ -1423,25 +1423,59 @@ function forceLogout(reason) {
 
 // Role-based access control
 async function checkAuthAndRole(requiredRole) {
+  console.log('checkAuthAndRole called with requiredRole:', requiredRole);
+  
   if (!isAuthed()) {
+    console.log('User not authenticated, redirecting to login');
     window.location.href = 'login.html';
     return false;
   }
   
   try {
+    console.log('Fetching user info from /users/me...');
     const user = await api('/users/me');
-    if (user.user_type !== requiredRole) {
+    console.log('User info received:', user);
+    console.log('User type from API:', user.user_type);
+    console.log('Required role:', requiredRole);
+    
+    // Normalize both values for comparison (case-insensitive, trim whitespace)
+    const userType = (user.user_type || '').toLowerCase().trim();
+    const requiredRoleNormalized = (requiredRole || '').toLowerCase().trim();
+    
+    console.log('User type (normalized):', userType);
+    console.log('Required role (normalized):', requiredRoleNormalized);
+    
+    if (userType !== requiredRoleNormalized) {
+      console.warn('Access denied: User type does not match required role');
       await Swal.fire({
         icon: 'error',
         title: 'Access Denied',
-        text: 'You do not have permission to access this page.'
+        text: `You do not have permission to access this page. Required role: ${requiredRole}, Your role: ${user.user_type || 'unknown'}`
       });
       window.location.href = 'index.html';
       return false;
     }
+    
+    console.log('Access granted - role matches');
+    window.currentUser = user; // Store user info globally
     return true;
   } catch (err) {
-    window.location.href = 'login.html';
+    console.error('Error checking auth and role:', err);
+    console.error('Error details:', err.message, err.response);
+    
+    // If it's a 401, redirect to login
+    if (err.response && err.response.status === 401) {
+      console.log('Unauthorized (401), redirecting to login');
+      window.location.href = 'login.html';
+    } else {
+      // For other errors, show error and redirect
+      await Swal.fire({
+        icon: 'error',
+        title: 'Authentication Error',
+        text: err.message || 'Failed to verify your authentication. Please try logging in again.'
+      });
+      window.location.href = 'login.html';
+    }
     return false;
   }
 }

@@ -97,7 +97,9 @@ async function api(path, options = {}) {
   if (/^https?:\/\//i.test(path)) {
     endpoint = path;
   } else {
-    endpoint = new URL(`api${normalizedPath}`, getBase()).toString();
+    // Ensure base URL ends with / for proper URL resolution
+    const base = getBase().endsWith('/') ? getBase() : getBase() + '/';
+    endpoint = new URL(`api${normalizedPath}`, base).toString();
   }
 
   try {

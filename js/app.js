@@ -1461,21 +1461,36 @@ async function checkAuthAndRole(requiredRole) {
     return true;
   } catch (err) {
     console.error('Error checking auth and role:', err);
-    console.error('Error details:', err.message, err.response);
+    console.error('Error details:', err.message);
+    console.error('Error response:', err.response);
     
-    // If it's a 401, redirect to login
+    // Only redirect on authentication errors (401), not on network/CORS errors
     if (err.response && err.response.status === 401) {
       console.log('Unauthorized (401), redirecting to login');
+      clearToken();
       window.location.href = 'login.html';
-    } else {
-      // For other errors, show error and redirect
-      await Swal.fire({
-        icon: 'error',
-        title: 'Authentication Error',
-        text: err.message || 'Failed to verify your authentication. Please try logging in again.'
-      });
-      window.location.href = 'login.html';
+      return false;
     }
+    
+    // For network/CORS errors, show warning but don't redirect immediately
+    // This allows the page to load even if there's a temporary network issue
+    if (err.message && (err.message.includes('Network') || err.message.includes('CORS') || err.message.includes('Failed to fetch'))) {
+      console.warn('Network/CORS error during auth check - allowing page to load');
+      await Swal.fire({
+        icon: 'warning',
+        title: 'Connection Warning',
+        text: 'Unable to verify authentication. Please check your connection. If the problem persists, try logging in again.',
+        timer: 3000,
+        timerProgressBar: true,
+        showConfirmButton: false
+      });
+      // Don't redirect on network errors - let user try to use the page
+      return false;
+    }
+    
+    // For other errors, show error but be more lenient
+    console.warn('Auth check error (non-401):', err.message);
+    // Don't redirect immediately - let the user see the error
     return false;
   }
 }

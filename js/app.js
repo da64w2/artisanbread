@@ -1423,30 +1423,37 @@ function forceLogout(reason) {
 
 // Role-based access control
 async function checkAuthAndRole(requiredRole) {
-  console.log('checkAuthAndRole called with requiredRole:', requiredRole);
+  console.log('=== checkAuthAndRole START ===');
+  console.log('Required role:', requiredRole);
+  console.log('Current URL:', window.location.href);
+  console.log('Token exists:', !!getToken());
+  console.log('Token value:', getToken() ? getToken().substring(0, 20) + '...' : 'none');
   
   if (!isAuthed()) {
-    console.log('User not authenticated, redirecting to login');
+    console.log('❌ User not authenticated (no token), redirecting to login');
     window.location.href = 'login.html';
     return false;
   }
   
   try {
-    console.log('Fetching user info from /users/me...');
+    console.log('📡 Fetching user info from /users/me...');
     const user = await api('/users/me');
-    console.log('User info received:', user);
+    console.log('✅ User info received:', user);
     console.log('User type from API:', user.user_type);
+    console.log('User type type:', typeof user.user_type);
     console.log('Required role:', requiredRole);
     
     // Normalize both values for comparison (case-insensitive, trim whitespace)
     const userType = (user.user_type || '').toLowerCase().trim();
     const requiredRoleNormalized = (requiredRole || '').toLowerCase().trim();
     
-    console.log('User type (normalized):', userType);
-    console.log('Required role (normalized):', requiredRoleNormalized);
+    console.log('User type (normalized):', `"${userType}"`);
+    console.log('Required role (normalized):', `"${requiredRoleNormalized}"`);
+    console.log('Match?', userType === requiredRoleNormalized);
     
     if (userType !== requiredRoleNormalized) {
-      console.warn('Access denied: User type does not match required role');
+      console.warn('❌ Access denied: User type does not match required role');
+      console.warn('Expected:', requiredRoleNormalized, 'Got:', userType);
       await Swal.fire({
         icon: 'error',
         title: 'Access Denied',
@@ -1456,17 +1463,19 @@ async function checkAuthAndRole(requiredRole) {
       return false;
     }
     
-    console.log('Access granted - role matches');
+    console.log('✅ Access granted - role matches');
     window.currentUser = user; // Store user info globally
+    console.log('=== checkAuthAndRole SUCCESS ===');
     return true;
   } catch (err) {
-    console.error('Error checking auth and role:', err);
-    console.error('Error details:', err.message);
-    console.error('Error response:', err.response);
+    console.error('❌ Error checking auth and role:', err);
+    console.error('Error message:', err.message);
+    console.error('Error response status:', err.response?.status);
+    console.error('Error response data:', err.response?.data);
     
     // Only redirect on authentication errors (401), not on network/CORS errors
     if (err.response && err.response.status === 401) {
-      console.log('Unauthorized (401), redirecting to login');
+      console.log('❌ Unauthorized (401), redirecting to login');
       clearToken();
       window.location.href = 'login.html';
       return false;
@@ -1474,23 +1483,37 @@ async function checkAuthAndRole(requiredRole) {
     
     // For network/CORS errors, show warning but don't redirect immediately
     // This allows the page to load even if there's a temporary network issue
-    if (err.message && (err.message.includes('Network') || err.message.includes('CORS') || err.message.includes('Failed to fetch'))) {
-      console.warn('Network/CORS error during auth check - allowing page to load');
-      await Swal.fire({
+    const isNetworkError = err.message && (
+      err.message.includes('Network') || 
+      err.message.includes('CORS') || 
+      err.message.includes('Failed to fetch') ||
+      err.message.includes('ERR_NETWORK')
+    );
+    
+    if (isNetworkError) {
+      console.warn('⚠️ Network/CORS error during auth check - allowing page to load');
+      console.warn('Error details:', err);
+      // Show a non-blocking warning
+      Swal.fire({
         icon: 'warning',
         title: 'Connection Warning',
-        text: 'Unable to verify authentication. Please check your connection. If the problem persists, try logging in again.',
+        text: 'Unable to verify authentication. Please check your connection.',
         timer: 3000,
         timerProgressBar: true,
-        showConfirmButton: false
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end'
       });
       // Don't redirect on network errors - let user try to use the page
+      console.log('=== checkAuthAndRole: Network error, not redirecting ===');
       return false;
     }
     
-    // For other errors, show error but be more lenient
-    console.warn('Auth check error (non-401):', err.message);
+    // For other errors, log but don't redirect immediately
+    console.warn('⚠️ Auth check error (non-401, non-network):', err.message);
+    console.warn('Full error object:', err);
     // Don't redirect immediately - let the user see the error
+    console.log('=== checkAuthAndRole: Error but not redirecting ===');
     return false;
   }
 }

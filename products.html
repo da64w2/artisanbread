@@ -110,14 +110,14 @@
     <script src="js/app.js"></script>
     
     <script>
-        // Mobile menu toggle function
-        function toggleMobileMenu() {
+        // Make functions globally accessible
+        window.toggleMobileMenu = function() {
             const mobileMenu = document.getElementById('mobileMenu');
             mobileMenu.classList.toggle('hidden');
-        }
+        };
 
         // Bread card template
-        function createBreadCard(bread) {
+        window.createBreadCard = function(bread) {
             const imgUrl = bread.image_path 
                 ? new URL(bread.image_path.replace(/^\//, ''), window.BASE || 'http://127.0.0.1:8000').toString()
                 : new URL('uploads/bread.png', window.BASE || 'http://127.0.0.1:8000').toString();
@@ -166,22 +166,29 @@
         }
 
         // Load and display breads
-        async function loadBreads(query = '') {
+        window.loadBreads = async function(query = '') {
             const loadingState = document.getElementById('loadingState');
             const emptyState = document.getElementById('emptyState');
             const breadsGrid = document.getElementById('breadsGrid');
             const breadCount = document.getElementById('breadCount');
+
+            if (!loadingState || !emptyState || !breadsGrid || !breadCount) {
+                console.error('Required DOM elements not found');
+                return;
+            }
 
             try {
                 loadingState.classList.remove('hidden');
                 emptyState.classList.add('hidden');
                 breadsGrid.classList.add('hidden');
 
+                console.log('Loading breads with query:', query);
                 const breads = await api('/breads' + (query ? `?q=${encodeURIComponent(query)}` : ''));
+                console.log('Breads loaded:', breads);
                 
                 loadingState.classList.add('hidden');
 
-                if (breads.length === 0) {
+                if (!breads || breads.length === 0) {
                     emptyState.classList.remove('hidden');
                     breadCount.textContent = '0 breads found';
                 } else {
@@ -189,6 +196,7 @@
                     breadCount.textContent = `${breads.length} ${breads.length === 1 ? 'bread' : 'breads'} found`;
                     
                     breadsGrid.innerHTML = breads.map(bread => createBreadCard(bread)).join('');
+                    console.log('Breads displayed successfully');
                 }
             } catch (error) {
                 console.error('Error loading breads:', error);
@@ -196,9 +204,12 @@
                 emptyState.classList.remove('hidden');
                 breadCount.textContent = 'Error loading breads';
                 
+                const errorMessage = error.message || error.response?.data?.message || 'Failed to load breads. Please try again later.';
+                console.error('Error details:', errorMessage);
+                
                 await Swal.fire({
                     title: 'Error',
-                    text: 'Failed to load breads. Please try again later.',
+                    text: errorMessage,
                     icon: 'error',
                     confirmButtonText: 'OK'
                 });
@@ -206,12 +217,12 @@
         }
 
         // View bread detail
-        function viewBreadDetail(breadId) {
+        window.viewBreadDetail = function(breadId) {
             window.location.href = `bread-detail.html?id=${breadId}`;
-        }
+        };
 
         // Add to cart
-        async function addToCart(breadId) {
+        window.addToCart = async function(breadId) {
             try {
                 // Check if user is authenticated
                 const token = getToken();
@@ -260,27 +271,49 @@
                     confirmButtonText: 'OK'
                 });
             }
-        }
+        };
 
         // Search functionality
         let searchTimeout;
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
-                    loadBreads(e.target.value);
-                }, 300);
-            });
-        }
-
+        
         // Initialize page
-        document.addEventListener('DOMContentLoaded', () => {
-            loadBreads();
+        function initializePage() {
+            // Wait for app.js to be fully loaded
+            if (typeof api === 'undefined') {
+                console.log('Waiting for app.js to load...');
+                setTimeout(initializePage, 100);
+                return;
+            }
+
+            console.log('Initializing products page...');
+            
+            // Set up search after DOM is loaded
+            const searchInputEl = document.getElementById('searchInput');
+            if (searchInputEl) {
+                searchInputEl.addEventListener('input', (e) => {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        window.loadBreads(e.target.value);
+                    }, 300);
+                });
+            }
+            
+            // Load breads
+            window.loadBreads();
+            
+            // Update cart count
             if (typeof updateCartCount === 'function') {
                 updateCartCount();
             }
-        });
+        }
+
+        // Start initialization when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializePage);
+        } else {
+            // DOM is already loaded
+            initializePage();
+        }
     </script>
 </body>
 </html>

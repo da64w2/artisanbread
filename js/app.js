@@ -458,8 +458,8 @@ if (loginForm) {
         redirectUrl = 'bread.html'; // Artisans go to bread management
         console.log('Artisan detected - redirecting to bread.html');
       } else if (userType === 'customer') {
-        redirectUrl = 'index.html'; // Customers go to home page
-        console.log('Customer detected - redirecting to index.html');
+        redirectUrl = 'customer.html'; // Customers go to customer dashboard
+        console.log('Customer detected - redirecting to customer.html');
       } else {
         console.warn('Unknown user type:', userType, '- defaulting to index.html');
         redirectUrl = 'index.html';

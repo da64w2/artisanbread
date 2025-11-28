@@ -175,6 +175,20 @@ async function requireAuth(redirectTo = 'login.html') {
   }
 }
 
+// Get profile URL based on user type
+function getProfileUrl(userType) {
+  if (!userType) return 'profile.html'; // fallback
+  const normalizedType = (userType || '').toLowerCase().trim();
+  if (normalizedType === 'customer') {
+    return 'customer-profile.html';
+  } else if (normalizedType === 'artisan') {
+    return 'artisan-profile.html';
+  } else if (normalizedType === 'admin') {
+    return 'admin-profile.html';
+  }
+  return 'profile.html'; // fallback
+}
+
 // Check auth status without redirect
 function checkAuthStatus() {
   console.log('checkAuthStatus called, isLoggingIn:', window.isLoggingIn);
@@ -203,6 +217,12 @@ function checkAuthStatus() {
         } catch(e) {
           console.warn('Could not update user name element:', e);
         }
+      });
+      
+      // Update all profile links to use role-specific profile page
+      const profileUrl = getProfileUrl(user.user_type);
+      document.querySelectorAll('a[href="profile.html"], a[href="./profile.html"]').forEach(link => {
+        link.href = profileUrl;
       });
     })
     .catch(err => {
@@ -1850,6 +1870,47 @@ async function loadBreadDetail(id) {
 
 async function addToCartFromDetail(breadId) {
   try {
+    // Check if user is authenticated
+    if (!isAuthed()) {
+      await Swal.fire({
+        title: 'Login Required',
+        text: 'Please login to add items to your cart.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Login',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#8B4513'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = 'login.html';
+        }
+      });
+      return;
+    }
+    
+    // Check if user is a customer
+    try {
+      const user = await api('/users/me');
+      const userType = (user.user_type || '').toLowerCase().trim();
+      if (userType !== 'customer') {
+        await Swal.fire({
+          title: 'Access Denied',
+          text: 'Only customers can add items to cart. Please login with a customer account.',
+          icon: 'error',
+          confirmButtonText: 'OK'
+        });
+        return;
+      }
+    } catch (err) {
+      await Swal.fire({
+        title: 'Error',
+        text: 'Failed to verify user role. Please try again.',
+        icon: 'error',
+        confirmButtonText: 'OK'
+      });
+      return;
+    }
+    
     await api('/cart', { method: 'POST', data: { bread_id: breadId, quantity: 1 } });
     await Swal.fire('Success', 'Added to cart!', 'success');
     updateCartCount();

@@ -233,9 +233,8 @@ const showAlert = (title, text, icon = 'info', options = {}) => {
 setAuthUI(isAuthed());
 
 // Global logout functionality
-const logoutBtn = document.getElementById('btnLogout');
-if (logoutBtn) {
-  logoutBtn.addEventListener('click', async () => {
+function handleLogout() {
+  return async () => {
     try { 
       await api('/auth/logout', { method: 'POST' }); 
       await showAlert('Logged Out', 'You have successfully logged out.', 'success');
@@ -244,8 +243,22 @@ if (logoutBtn) {
       await showAlert('Error', 'Failed to log out properly, but you will be logged out locally.', 'warning');
     }
     clearToken();
+    setAuthUI(false);
+    // Redirect to landing page (index.html) after logout
     location.href = 'login.html';
-  });
+  };
+}
+
+// Desktop logout button
+const logoutBtn = document.getElementById('btnLogout');
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', handleLogout());
+}
+
+// Mobile logout button
+const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
+if (mobileLogoutBtn) {
+  mobileLogoutBtn.addEventListener('click', handleLogout());
 }
 
 // Registration form handler
@@ -1270,6 +1283,7 @@ function isValidTokenFormat(token) {
 function forceLogout(reason) {
     localStorage.removeItem('token');
     sessionStorage.removeItem('user');
+    setAuthUI(false);
     if (reason) {
         Swal.fire({
             icon: 'warning',
@@ -1279,10 +1293,10 @@ function forceLogout(reason) {
             showConfirmButton: false
         });
     }
-    // Redirect only if not on login/register
-    const publicPages = ['login.html', 'register.html', 'forgot-password.html'];
+    // Redirect to landing page (index.html) after logout
+    const publicPages = ['login.html', 'register.html', 'forgot-password.html', 'index.html'];
     if (!publicPages.some(page => window.location.pathname.endsWith(page))) {
-        setTimeout(() => window.location.href = 'login.html', 1500);
+        setTimeout(() => window.location.href = 'index.html', 1500);
     }
 }
 
@@ -1324,7 +1338,17 @@ async function checkAuthAndRole(requiredRole) {
         title: 'Access Denied',
         text: `You do not have permission to access this page. Required role: ${requiredRole}, Your role: ${user.user_type || 'unknown'}`
       });
-      window.location.href = 'index.html';
+      // Redirect based on user type instead of always going to index.html
+      if (userType === 'customer') {
+        window.location.href = 'customer.html';
+      } else if (userType === 'admin') {
+        window.location.href = 'admin.html';
+      } else if (userType === 'artisan') {
+        window.location.href = 'bread.html';
+      } else {
+        // Only redirect to index.html if user type is unknown
+        window.location.href = 'index.html';
+      }
       return false;
     }
     
@@ -1458,43 +1482,81 @@ async function deleteUser(id) {
 
 // Cart Functions
 async function loadCart() {
+  const cartLoading = document.getElementById('cartLoading');
+  const cartItems = document.getElementById('cartItems');
+  const cartEmpty = document.getElementById('cartEmpty');
+  const cartContent = document.getElementById('cartContent');
+  
+  if (cartLoading) cartLoading.classList.remove('hidden');
+  if (cartEmpty) cartEmpty.classList.add('hidden');
+  if (cartContent) cartContent.classList.add('hidden');
+  
   try {
     const cart = await api('/cart');
-    const cartItems = document.getElementById('cartItems');
-    const cartEmpty = document.getElementById('cartEmpty');
-    const cartContent = document.getElementById('cartContent');
+    
+    if (cartLoading) cartLoading.classList.add('hidden');
     
     if (!cart.items || cart.items.length === 0) {
-      cartEmpty.classList.remove('hidden');
-      cartContent.classList.add('hidden');
+      if (cartEmpty) cartEmpty.classList.remove('hidden');
+      if (cartContent) cartContent.classList.add('hidden');
       return;
     }
     
-    cartEmpty.classList.add('hidden');
-    cartContent.classList.remove('hidden');
+    if (cartEmpty) cartEmpty.classList.add('hidden');
+    if (cartContent) cartContent.classList.remove('hidden');
     
-    cartItems.innerHTML = cart.items.map(item => `
-      <div class="p-4 flex items-center space-x-4">
-        <img src="${getBase()}/${item.bread.image_path}" alt="${item.bread.name}" class="w-20 h-20 object-cover rounded">
-        <div class="flex-1">
-          <h3 class="font-bold">${item.bread.name}</h3>
-          <p class="text-gray-600">₱${item.bread.price.toFixed(2)}</p>
-        </div>
-        <div class="flex items-center space-x-2">
-          <button onclick="updateCartQuantity(${item.id}, ${item.quantity - 1})" class="px-2 py-1 bg-gray-200 rounded">-</button>
-          <span>${item.quantity}</span>
-          <button onclick="updateCartQuantity(${item.id}, ${item.quantity + 1})" class="px-2 py-1 bg-gray-200 rounded">+</button>
-        </div>
-        <div class="text-right">
-          <p class="font-bold">₱${item.subtotal.toFixed(2)}</p>
-          <button onclick="removeFromCart(${item.id})" class="text-red-600 text-sm">Remove</button>
-        </div>
-      </div>
-    `).join('');
+    if (cartItems) {
+      const imgBase = getBase();
+      cartItems.innerHTML = cart.items.map(item => {
+        const imgUrl = item.bread.image_path 
+          ? new URL(item.bread.image_path.replace(/^\//, ''), imgBase).toString()
+          : new URL('uploads/bread.png', imgBase).toString();
+        
+        return `
+          <div class="p-6 flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6 hover:bg-gray-50 transition-colors">
+            <img src="${imgUrl}" 
+                 alt="${item.bread.name}" 
+                 class="w-24 h-24 object-cover rounded-lg shadow"
+                 onerror="this.src='${new URL('uploads/bread.png', imgBase).toString()}'">
+            <div class="flex-1 w-full md:w-auto">
+              <h3 class="text-lg font-bold text-gray-800 mb-1">${item.bread.name}</h3>
+              <p class="text-gray-600 mb-2">₱${parseFloat(item.bread.price || 0).toFixed(2)} each</p>
+              <p class="text-sm text-gray-500">Subtotal: ₱${parseFloat(item.subtotal || 0).toFixed(2)}</p>
+            </div>
+            <div class="flex items-center space-x-3">
+              <button onclick="updateCartQuantity(${item.id}, ${item.quantity - 1})" 
+                      class="w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded-full transition-colors">
+                <i class="fas fa-minus text-xs"></i>
+              </button>
+              <span class="text-lg font-semibold w-8 text-center">${item.quantity}</span>
+              <button onclick="updateCartQuantity(${item.id}, ${item.quantity + 1})" 
+                      class="w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded-full transition-colors">
+                <i class="fas fa-plus text-xs"></i>
+              </button>
+            </div>
+            <button onclick="removeFromCart(${item.id})" 
+                    class="text-red-600 hover:text-red-800 transition-colors px-4 py-2 rounded-lg hover:bg-red-50">
+              <i class="fas fa-trash mr-2"></i>Remove
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
     
-    document.getElementById('cartTotal').textContent = `₱${cart.total.toFixed(2)}`;
+    const cartTotalEl = document.getElementById('cartTotal');
+    if (cartTotalEl) {
+      cartTotalEl.textContent = `₱${parseFloat(cart.total || 0).toFixed(2)}`;
+    }
   } catch (err) {
     console.error('Failed to load cart:', err);
+    if (cartLoading) cartLoading.classList.add('hidden');
+    if (cartEmpty) {
+      cartEmpty.classList.remove('hidden');
+      const emptyText = cartEmpty.querySelector('p');
+      if (emptyText) {
+        emptyText.textContent = err.message || 'Failed to load cart. Please try again.';
+      }
+    }
   }
 }
 
@@ -1526,76 +1588,157 @@ async function updateCartCount() {
   try {
     const cart = await api('/cart');
     const count = cart.items ? cart.items.reduce((sum, item) => sum + item.quantity, 0) : 0;
-    document.getElementById('cartCount').textContent = count;
+    
+    // Update all cart count elements that exist
+    const cartCountEl = document.getElementById('cartCount');
+    if (cartCountEl) cartCountEl.textContent = count;
+    
+    const cartCountNavEl = document.getElementById('cartCountNav');
+    if (cartCountNavEl) cartCountNavEl.textContent = count;
+    
+    const cartCountMobileEl = document.getElementById('cartCountMobile');
+    if (cartCountMobileEl) cartCountMobileEl.textContent = count;
   } catch (err) {
-    document.getElementById('cartCount').textContent = '0';
+    // If not authenticated or cart error, set to 0
+    const cartCountEl = document.getElementById('cartCount');
+    if (cartCountEl) cartCountEl.textContent = '0';
+    
+    const cartCountNavEl = document.getElementById('cartCountNav');
+    if (cartCountNavEl) cartCountNavEl.textContent = '0';
+    
+    const cartCountMobileEl = document.getElementById('cartCountMobile');
+    if (cartCountMobileEl) cartCountMobileEl.textContent = '0';
   }
 }
 
 // Order Functions
 async function loadOrders() {
+  const ordersLoading = document.getElementById('ordersLoading');
+  const ordersList = document.getElementById('ordersList');
+  const ordersEmpty = document.getElementById('ordersEmpty');
+  
+  if (ordersLoading) ordersLoading.classList.remove('hidden');
+  if (ordersEmpty) ordersEmpty.classList.add('hidden');
+  if (ordersList) ordersList.classList.add('hidden');
+  
   try {
     const orders = await api('/orders');
-    const ordersList = document.getElementById('ordersList');
-    const ordersEmpty = document.getElementById('ordersEmpty');
+    
+    if (ordersLoading) ordersLoading.classList.add('hidden');
     
     if (!orders || orders.length === 0) {
-      ordersEmpty.classList.remove('hidden');
-      ordersList.classList.add('hidden');
+      if (ordersEmpty) ordersEmpty.classList.remove('hidden');
+      if (ordersList) ordersList.classList.add('hidden');
       return;
     }
     
-    ordersEmpty.classList.add('hidden');
-    ordersList.classList.remove('hidden');
+    if (ordersEmpty) ordersEmpty.classList.add('hidden');
+    if (ordersList) ordersList.classList.remove('hidden');
     
-    ordersList.innerHTML = orders.map(order => `
-      <div class="bg-white rounded-lg shadow p-6">
-        <div class="flex justify-between items-start mb-4">
-          <div>
-            <h3 class="text-lg font-bold">Order #${order.id}</h3>
-            <p class="text-gray-600">${new Date(order.created_at).toLocaleDateString()}</p>
-          </div>
-          <div class="text-right">
-            <span class="px-3 py-1 rounded text-sm ${order.status === 'completed' ? 'bg-green-100 text-green-800' : order.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}">
-              ${order.status}
-            </span>
-            <p class="text-xl font-bold mt-2">₱${order.total_amount.toFixed(2)}</p>
-          </div>
-        </div>
-        <div class="space-y-2">
-          ${order.items.map(item => `
-            <div class="flex justify-between">
-              <span>${item.bread.name} x${item.quantity}</span>
-              <span>₱${item.subtotal.toFixed(2)}</span>
+    if (ordersList) {
+      ordersList.innerHTML = orders.map(order => {
+        const statusColors = {
+          'completed': 'bg-green-100 text-green-800 border-green-300',
+          'cancelled': 'bg-red-100 text-red-800 border-red-300',
+          'pending': 'bg-yellow-100 text-yellow-800 border-yellow-300',
+          'processing': 'bg-blue-100 text-blue-800 border-blue-300'
+        };
+        const statusClass = statusColors[order.status] || 'bg-gray-100 text-gray-800 border-gray-300';
+        const orderDate = order.created_at ? new Date(order.created_at).toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }) : 'Date not available';
+        
+        return `
+          <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+            <div class="bg-amber-50 px-6 py-4 border-b border-amber-200">
+              <div class="flex justify-between items-start">
+                <div>
+                  <h3 class="text-xl font-bold text-gray-800">Order #${order.id}</h3>
+                  <p class="text-sm text-gray-600 mt-1">
+                    <i class="fas fa-calendar-alt mr-1"></i>${orderDate}
+                  </p>
+                </div>
+                <div class="text-right">
+                  <span class="px-4 py-2 rounded-full text-sm font-semibold border-2 ${statusClass}">
+                    ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                  </span>
+                  <p class="text-2xl font-bold text-amber-600 mt-2">₱${parseFloat(order.total_amount || 0).toFixed(2)}</p>
+                </div>
+              </div>
             </div>
-          `).join('')}
-        </div>
-        ${order.status === 'pending' ? `
-          <button onclick="cancelOrder(${order.id})" class="mt-4 text-red-600 hover:text-red-800">Cancel Order</button>
-        ` : ''}
-      </div>
-    `).join('');
+            <div class="p-6">
+              <h4 class="font-semibold text-gray-700 mb-3">Order Items:</h4>
+              <div class="space-y-3 mb-4">
+                ${order.items ? order.items.map(item => `
+                  <div class="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+                    <div class="flex-1">
+                      <span class="font-medium text-gray-800">${item.bread ? item.bread.name : 'Unknown Item'}</span>
+                      <span class="text-gray-500 ml-2">x${item.quantity || 0}</span>
+                    </div>
+                    <span class="font-semibold text-gray-700">₱${parseFloat(item.subtotal || 0).toFixed(2)}</span>
+                  </div>
+                `).join('') : '<p class="text-gray-500">No items found</p>'}
+              </div>
+              ${order.status === 'pending' ? `
+                <button onclick="cancelOrder(${order.id})" 
+                        class="mt-4 text-red-600 hover:text-red-800 font-semibold transition-colors">
+                  <i class="fas fa-times-circle mr-2"></i>Cancel Order
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
   } catch (err) {
     console.error('Failed to load orders:', err);
+    if (ordersLoading) ordersLoading.classList.add('hidden');
+    if (ordersEmpty) {
+      ordersEmpty.classList.remove('hidden');
+      const emptyText = ordersEmpty.querySelector('p');
+      if (emptyText) {
+        emptyText.textContent = err.message || 'Failed to load orders. Please try again.';
+      }
+    }
   }
 }
 
 async function cancelOrder(id) {
   const result = await Swal.fire({
     title: 'Cancel Order?',
-    text: 'Are you sure you want to cancel this order?',
+    text: 'Are you sure you want to cancel this order? This action cannot be undone.',
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonText: 'Yes, cancel it'
+    confirmButtonText: 'Yes, Cancel Order',
+    cancelButtonText: 'No, Keep Order',
+    confirmButtonColor: '#dc2626',
+    cancelButtonColor: '#6b7280'
   });
   
   if (result.isConfirmed) {
     try {
       await api(`/orders/${id}/cancel`, { method: 'PUT' });
-      await Swal.fire('Cancelled!', 'Order has been cancelled.', 'success');
-      loadOrders();
+      await Swal.fire({
+        title: 'Order Cancelled',
+        text: 'Your order has been cancelled successfully.',
+        icon: 'success',
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#d97706'
+      });
+      if (typeof loadOrders === 'function') {
+        loadOrders();
+      }
     } catch (err) {
-      await Swal.fire('Error', err.message || 'Failed to cancel order', 'error');
+      await Swal.fire({
+        title: 'Error',
+        text: err.message || 'Failed to cancel order. Please try again.',
+        icon: 'error',
+        confirmButtonText: 'OK'
+      });
     }
   }
 }
@@ -1630,31 +1773,78 @@ async function loadArtisanDashboard() {
 
 // Bread Detail
 async function loadBreadDetail(id) {
+  const loadingState = document.getElementById('loadingState');
+  const errorState = document.getElementById('errorState');
+  const detail = document.getElementById('breadDetail');
+  
   try {
     const bread = await api(`/breads/${id}`);
-    const detail = document.getElementById('breadDetail');
+    
+    if (loadingState) loadingState.classList.add('hidden');
+    if (errorState) errorState.classList.add('hidden');
+    
     if (detail) {
+      const imgUrl = bread.image_path 
+        ? new URL(bread.image_path.replace(/^\//, ''), getBase()).toString()
+        : new URL('uploads/bread.png', getBase()).toString();
+      
+      const stockBadge = bread.stock_quantity > 0 
+        ? `<span class="px-3 py-1 text-sm font-semibold rounded-full bg-green-100 text-green-800">In Stock (${bread.stock_quantity})</span>`
+        : `<span class="px-3 py-1 text-sm font-semibold rounded-full bg-red-100 text-red-800">Out of Stock</span>`;
+      
       detail.innerHTML = `
         <div class="md:flex">
           <div class="md:w-1/2">
-            <img src="${getBase()}/${bread.image_path}" alt="${bread.name}" class="w-full h-96 object-cover">
+            <img src="${imgUrl}" 
+                 alt="${bread.name}" 
+                 class="w-full h-96 object-cover"
+                 onerror="this.src='${new URL('uploads/bread.png', getBase()).toString()}'">
           </div>
           <div class="md:w-1/2 p-8">
             <h1 class="text-3xl font-bold mb-4">${bread.name}</h1>
-            <p class="text-2xl font-bold text-amber-600 mb-4">₱${bread.price.toFixed(2)}</p>
-            <p class="text-gray-600 mb-4">${bread.description || 'No description'}</p>
-            <p class="mb-4">Stock: ${bread.stock_quantity || 0}</p>
+            <p class="text-2xl font-bold text-amber-600 mb-4">₱${parseFloat(bread.price || 0).toFixed(2)}</p>
+            <div class="mb-4">${stockBadge}</div>
+            <p class="text-gray-600 mb-6 leading-relaxed">${bread.description || 'No description available for this bread.'}</p>
             ${isAuthed() ? `
-              <button onclick="addToCartFromDetail(${bread.id})" class="bg-amber-600 text-white px-6 py-3 rounded-lg hover:bg-amber-700">
-                Add to Cart
-              </button>
-            ` : '<a href="login.html" class="bg-amber-600 text-white px-6 py-3 rounded-lg hover:bg-amber-700 inline-block">Login to Add to Cart</a>'}
+              ${bread.stock_quantity > 0 ? `
+                <button onclick="addToCartFromDetail(${bread.id})" 
+                        class="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2">
+                  <i class="fas fa-cart-plus"></i>
+                  Add to Cart
+                </button>
+              ` : `
+                <button disabled 
+                        class="w-full bg-gray-300 text-gray-500 px-6 py-3 rounded-lg font-semibold cursor-not-allowed">
+                  Out of Stock
+                </button>
+              `}
+            ` : `
+              <a href="login.html" 
+                 class="w-full bg-amber-600 text-white px-6 py-3 rounded-lg hover:bg-amber-700 inline-block text-center font-semibold">
+                <i class="fas fa-sign-in-alt mr-2"></i>Login to Add to Cart
+              </a>
+            `}
+            <div class="mt-4">
+              <a href="products.html" class="text-amber-600 hover:text-amber-700 flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i>Back to Browse Breads
+              </a>
+            </div>
           </div>
         </div>
       `;
+      detail.classList.remove('hidden');
     }
   } catch (err) {
     console.error('Failed to load bread detail:', err);
+    if (loadingState) loadingState.classList.add('hidden');
+    if (errorState) {
+      errorState.classList.remove('hidden');
+      const errorMsg = document.getElementById('errorMessage');
+      if (errorMsg) {
+        errorMsg.textContent = err.message || err.response?.data?.message || 'Failed to load bread details.';
+      }
+    }
+    throw err;
   }
 }
 

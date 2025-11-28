@@ -294,17 +294,28 @@
                 searchInputEl.addEventListener('input', (e) => {
                     clearTimeout(searchTimeout);
                     searchTimeout = setTimeout(() => {
-                        window.loadBreads(e.target.value);
+                        if (typeof window.loadBreads === 'function') {
+                            window.loadBreads(e.target.value);
+                        }
                     }, 300);
                 });
             }
             
             // Load breads
-            window.loadBreads();
+            if (typeof window.loadBreads === 'function') {
+                window.loadBreads();
+            } else {
+                console.error('loadBreads function not found');
+            }
             
-            // Update cart count
+            // Update cart count (only if user is authenticated)
             if (typeof updateCartCount === 'function') {
-                updateCartCount();
+                try {
+                    updateCartCount();
+                } catch (err) {
+                    // Silently fail if not authenticated
+                    console.log('Cart count update skipped (user not authenticated)');
+                }
             }
         }
 

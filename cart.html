@@ -17,7 +17,8 @@
             <div class="flex justify-between items-center py-4">
                 <h1 class="text-2xl font-bold text-gray-800">Shopping Cart</h1>
                 <div class="flex items-center space-x-4">
-                    <a href="index.html" class="text-gray-600 hover:text-amber-600">Continue Shopping</a>
+                    <a href="products.html" class="text-gray-600 hover:text-amber-600">Continue Shopping</a>
+                    <a href="customer.html" class="text-gray-600 hover:text-amber-600">Dashboard</a>
                     <a href="profile.html" class="text-gray-600 hover:text-amber-600">Profile</a>
                     <button id="btnLogout" class="text-red-600 hover:text-red-700">Logout</button>
                 </div>
@@ -26,29 +27,43 @@
     </nav>
 
     <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Loading State -->
+        <div id="cartLoading" class="text-center py-12">
+            <i class="fas fa-spinner fa-spin text-4xl text-amber-600 mb-4"></i>
+            <p class="text-gray-600">Loading your cart...</p>
+        </div>
+
         <div id="cartEmpty" class="text-center py-12 hidden">
             <i class="fas fa-shopping-cart text-6xl text-gray-300 mb-4"></i>
-            <p class="text-xl text-gray-600">Your cart is empty</p>
-            <a href="index.html" class="mt-4 inline-block bg-amber-600 text-white px-6 py-3 rounded-lg hover:bg-amber-700">
-                Start Shopping
+            <p class="text-xl text-gray-600 mb-2">Your cart is empty</p>
+            <p class="text-gray-500 mb-6">Add some delicious breads to get started!</p>
+            <a href="products.html" class="mt-4 inline-block bg-gradient-to-r from-amber-500 to-orange-600 text-white px-6 py-3 rounded-lg hover:from-amber-600 hover:to-orange-700 font-semibold transition-all">
+                <i class="fas fa-store mr-2"></i>Start Shopping
             </a>
         </div>
 
         <div id="cartContent" class="hidden">
-            <div class="bg-white rounded-lg shadow overflow-hidden mb-4">
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-6">
+                <div class="bg-amber-50 px-6 py-4 border-b border-amber-200">
+                    <h2 class="text-xl font-bold text-gray-800">Cart Items</h2>
+                </div>
                 <div id="cartItems" class="divide-y divide-gray-200">
                     <!-- Cart items will be loaded here -->
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <span class="text-xl font-bold">Total:</span>
-                    <span id="cartTotal" class="text-2xl font-bold text-amber-600">₱0.00</span>
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex justify-between items-center mb-4 pb-4 border-b border-gray-200">
+                    <span class="text-xl font-bold text-gray-800">Total:</span>
+                    <span id="cartTotal" class="text-3xl font-bold text-amber-600">₱0.00</span>
                 </div>
-                <button id="btnCheckout" class="w-full bg-amber-600 text-white px-6 py-3 rounded-lg hover:bg-amber-700">
+                <button id="btnCheckout" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white px-6 py-4 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2">
+                    <i class="fas fa-credit-card"></i>
                     Proceed to Checkout
                 </button>
+                <a href="products.html" class="block w-full text-center mt-3 text-amber-600 hover:text-amber-700">
+                    <i class="fas fa-arrow-left mr-2"></i>Continue Shopping
+                </a>
             </div>
         </div>
     </div>
@@ -57,15 +72,53 @@
     <script>
         $(document).ready(function() {
             checkAuthAndRole('customer');
-            loadCart();
             
+            // Update cart count
+            if (typeof updateCartCount === 'function') {
+                updateCartCount();
+            }
+            
+            // Load cart
+            if (typeof loadCart === 'function') {
+                loadCart();
+            } else {
+                console.error('loadCart function not found');
+                document.getElementById('cartLoading').classList.add('hidden');
+                document.getElementById('cartEmpty').classList.remove('hidden');
+            }
+            
+            // Checkout handler
             $('#btnCheckout').click(async function() {
                 try {
-                    const order = await api('/orders', { method: 'POST' });
-                    await Swal.fire('Success', 'Order placed successfully!', 'success');
-                    window.location.href = 'orders.html';
+                    const result = await Swal.fire({
+                        title: 'Confirm Checkout',
+                        text: 'Are you sure you want to proceed with checkout?',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, Checkout',
+                        cancelButtonText: 'Cancel',
+                        confirmButtonColor: '#d97706',
+                        cancelButtonColor: '#6b7280'
+                    });
+                    
+                    if (result.isConfirmed) {
+                        const order = await api('/orders', { method: 'POST' });
+                        await Swal.fire({
+                            title: 'Success!',
+                            text: 'Your order has been placed successfully!',
+                            icon: 'success',
+                            confirmButtonText: 'View Orders',
+                            confirmButtonColor: '#d97706'
+                        });
+                        window.location.href = 'orders.html';
+                    }
                 } catch (err) {
-                    await Swal.fire('Error', err.message || 'Failed to place order', 'error');
+                    await Swal.fire({
+                        title: 'Error',
+                        text: err.message || 'Failed to place order. Please try again.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
                 }
             });
         });

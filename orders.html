@@ -17,8 +17,12 @@
             <div class="flex justify-between items-center py-4">
                 <h1 class="text-2xl font-bold text-gray-800">My Orders</h1>
                 <div class="flex items-center space-x-4">
-                    <a href="index.html" class="text-gray-600 hover:text-amber-600">Shop</a>
-                    <a href="cart.html" class="text-gray-600 hover:text-amber-600">Cart</a>
+                    <a href="products.html" class="text-gray-600 hover:text-amber-600">Shop</a>
+                    <a href="cart.html" class="text-gray-600 hover:text-amber-600 relative">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span id="cartCountNav" class="absolute -top-2 -right-2 bg-amber-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+                    </a>
+                    <a href="customer.html" class="text-gray-600 hover:text-amber-600">Dashboard</a>
                     <a href="profile.html" class="text-gray-600 hover:text-amber-600">Profile</a>
                     <button id="btnLogout" class="text-red-600 hover:text-red-700">Logout</button>
                 </div>
@@ -27,15 +31,22 @@
     </nav>
 
     <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Loading State -->
+        <div id="ordersLoading" class="text-center py-12">
+            <i class="fas fa-spinner fa-spin text-4xl text-amber-600 mb-4"></i>
+            <p class="text-gray-600">Loading your orders...</p>
+        </div>
+
         <div id="ordersEmpty" class="text-center py-12 hidden">
             <i class="fas fa-receipt text-6xl text-gray-300 mb-4"></i>
-            <p class="text-xl text-gray-600">You have no orders yet</p>
-            <a href="index.html" class="mt-4 inline-block bg-amber-600 text-white px-6 py-3 rounded-lg hover:bg-amber-700">
-                Start Shopping
+            <p class="text-xl text-gray-600 mb-2">You have no orders yet</p>
+            <p class="text-gray-500 mb-6">Start shopping to see your orders here!</p>
+            <a href="products.html" class="mt-4 inline-block bg-gradient-to-r from-amber-500 to-orange-600 text-white px-6 py-3 rounded-lg hover:from-amber-600 hover:to-orange-700 font-semibold transition-all">
+                <i class="fas fa-store mr-2"></i>Start Shopping
             </a>
         </div>
 
-        <div id="ordersList" class="space-y-4">
+        <div id="ordersList" class="hidden space-y-4">
             <!-- Orders will be loaded here -->
         </div>
     </div>
@@ -44,7 +55,20 @@
     <script>
         $(document).ready(function() {
             checkAuthAndRole('customer');
-            loadOrders();
+            
+            // Update cart count
+            if (typeof updateCartCount === 'function') {
+                updateCartCount();
+            }
+            
+            // Load orders
+            if (typeof loadOrders === 'function') {
+                loadOrders();
+            } else {
+                console.error('loadOrders function not found');
+                document.getElementById('ordersLoading').classList.add('hidden');
+                document.getElementById('ordersEmpty').classList.remove('hidden');
+            }
         });
     </script>
 </body>

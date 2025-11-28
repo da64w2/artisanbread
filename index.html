@@ -23,13 +23,17 @@
                 
                 <div class="hidden md:flex items-center space-x-6">
                     <a href="./index.html" class="text-amber-600 font-semibold">Home</a>
-                    <a href="./profile.html" id="profileNavBtn" class="text-gray-600 hover:text-amber-600 transition-colors auth-only" style="display: none;">Profile</a>
+                    <a href="./products.html" class="text-gray-600 hover:text-amber-600 transition-colors">Browse Breads</a>
                     <div id="authButtons" class="flex items-center space-x-3 guest-only" style="display: none;">
                         <a href="./login.html" class="text-amber-600 hover:text-amber-700 transition-colors">Login</a>
                         <a href="./register.html" class="btn-primary text-white px-4 py-2 rounded-lg">Sign Up</a>
                     </div>
                     <div id="userMenu" class="flex items-center space-x-3 auth-only" style="display: none;">
-                        <span class="text-gray-600">Welcome, <span id="userName"></span></span>
+                        <a href="customer.html" class="text-gray-600 hover:text-amber-600 transition-colors">Dashboard</a>
+                        <a href="cart.html" class="text-gray-600 hover:text-amber-600 transition-colors relative">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span id="cartCountNav" class="absolute -top-2 -right-2 bg-amber-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+                        </a>
                         <a href="profile.html" class="text-amber-600 hover:text-amber-700 transition-colors">
                             <i class="fas fa-user"></i>
                         </a>
@@ -49,6 +53,11 @@
         <div id="mobileMenu" class="hidden md:hidden bg-white border-t">
             <div class="px-4 py-2 space-y-2">
                 <span class="block w-full text-left py-2 text-amber-600 font-semibold">Home</span>
+                <a href="./products.html" class="block w-full text-left py-2 text-gray-600">Browse Breads</a>
+                <a href="./customer.html" class="block w-full text-left py-2 text-gray-600 auth-only" style="display: none;">Dashboard</a>
+                <a href="./cart.html" class="block w-full text-left py-2 text-gray-600 auth-only relative" style="display: none;">
+                    Cart <span id="cartCountMobile" class="ml-2 bg-amber-600 text-white text-xs rounded-full px-2 py-1">0</span>
+                </a>
                 <a href="./profile.html" id="mobileProfileBtn" class="block w-full text-left py-2 text-amber-600 auth-only" style="display: none;">Profile</a>
                 <a href="./login.html" class="block w-full text-left py-2 text-amber-600 guest-only" style="display: none;">Login</a>
                 <a href="./register.html" class="block w-full text-left py-2 text-amber-600 guest-only" style="display: none;">Sign Up</a>
@@ -117,36 +126,29 @@
     
     <script>
         // Mobile menu toggle function
-        function toggleMobileMenu() {
+        window.toggleMobileMenu = function() {
             const mobileMenu = document.getElementById('mobileMenu');
-            mobileMenu.classList.toggle('hidden');
-        }
+            if (mobileMenu) {
+                mobileMenu.classList.toggle('hidden');
+            }
+        };
 
-        // Simple auth state management for demo
-        let isAuthenticated = false; // Set to false initially, will be updated by requireAuth()
-
-        function toggleAuthState() {
-            isAuthenticated = !isAuthenticated;
-            updateUI();
-        }
-
-        function updateUI() {
-            const guestElements = document.querySelectorAll('.guest-only');
-            const authElements = document.querySelectorAll('.auth-only');
+        // Initialize page - Landing page for all visitors
+        $(document).ready(function() {
+            // Check auth status and update UI (show/hide login buttons vs user menu)
+            if (typeof checkAuthStatus === 'function') {
+                checkAuthStatus();
+            }
             
-            guestElements.forEach(el => {
-                el.style.display = isAuthenticated ? 'none' : 'block';
-            });
-            
-            authElements.forEach(el => {
-                el.style.display = isAuthenticated ? 'block' : 'none';
-            });
-        }
-
-        // Logout handlers are handled by app.js globally
-
-        // Initialize UI - will be updated by requireAuth()
-        updateUI();
+            // Update cart count if authenticated (for navigation display only)
+            if (typeof updateCartCount === 'function') {
+                try {
+                    updateCartCount();
+                } catch (err) {
+                    // Silently fail if not authenticated - this is expected for landing page
+                }
+            }
+        });
     </script>
     
 </body>

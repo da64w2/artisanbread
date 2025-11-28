@@ -54,7 +54,13 @@
     <script>
         $(document).ready(function() {
             checkAuthAndRole('customer');
-            updateCartCount();
+            
+            // Update cart count
+            if (typeof updateCartCount === 'function') {
+                updateCartCount();
+            } else {
+                console.error('updateCartCount function not found');
+            }
         });
     </script>
 </body>

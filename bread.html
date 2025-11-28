@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Breads - Artisan Bread Store</title>
+    <title>Bread Management - Artisan Bread Store</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    <script src="js/lib/sweetalert2.min.js"></script>
+    <script src="js/lib/jquery.min.js"></script>
+    <script src="js/lib/axios.min.js"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <!-- Navigation -->
@@ -56,114 +59,517 @@
         </div>
     </nav>
 
-    <!-- Bread Management Section -->
+    <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 py-8">
-        <div class="text-center mb-8">
-            <h2 class="text-4xl font-bold text-gray-800 mb-4">Bread House</h2>
-            <p class="text-gray-600 max-w-2xl mx-auto">Manage your artisanal breads</p>
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h2 class="text-4xl font-bold text-gray-800 mb-2">Bread Management</h2>
+            <p class="text-gray-600">Manage your artisanal breads and customer orders</p>
         </div>
 
-        <!-- Add Bread Form -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Add New Bread</h3>
-            <form id="addForm" class="grid md:grid-cols-2 lg:grid-cols-5 gap-4 items-end" enctype="multipart/form-data">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Name</label>
-                    <input name="name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="e.g. Sourdough" required>
+        <!-- Tabs -->
+        <div class="mb-6 border-b border-gray-200">
+            <nav class="flex space-x-8">
+                <button id="tabBreads" class="tab-button active py-4 px-1 border-b-2 border-amber-600 font-medium text-sm text-amber-600">
+                    <i class="fas fa-bread-slice mr-2"></i>My Breads
+                </button>
+                <button id="tabOrders" class="tab-button py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    <i class="fas fa-shopping-bag mr-2"></i>Customer Orders
+                </button>
+            </nav>
+        </div>
+
+        <!-- Breads Tab Content -->
+        <div id="breadsTab" class="tab-content">
+            <!-- Action Bar -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div class="flex-1 w-full md:w-auto">
+                        <input id="searchBreads" type="text" 
+                               class="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent" 
+                               placeholder="Search breads...">
+                    </div>
+                    <button onclick="openAddBreadModal()" 
+                            class="w-full md:w-auto bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white px-6 py-2 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2">
+                        <i class="fas fa-plus"></i>
+                        Add New Bread
+                    </button>
+                </div>
+            </div>
+
+            <!-- Breads Table -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table id="breadsTable" class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="breadsTableBody" class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                                    <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                                    <p>Loading breads...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orders Tab Content -->
+        <div id="ordersTab" class="tab-content hidden">
+            <!-- Orders Filter -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <select id="orderStatusFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                        <option value="">All Orders</option>
+                        <option value="pending">Pending</option>
+                        <option value="processing">Processing</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Orders List -->
+            <div id="ordersList" class="space-y-4">
+                <div class="bg-white rounded-lg shadow-md p-8 text-center">
+                    <i class="fas fa-spinner fa-spin text-4xl text-amber-600 mb-4"></i>
+                    <p class="text-gray-600">Loading orders...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add Bread Modal -->
+    <div id="addBreadModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-2xl font-bold text-gray-800">Add New Bread</h3>
+                <button onclick="closeAddBreadModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            
+            <form id="addBreadForm" enctype="multipart/form-data" class="space-y-4">
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Name *</label>
+                        <input type="text" name="name" required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                               placeholder="e.g. Sourdough">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Price *</label>
+                        <input type="number" name="price" step="0.01" min="0" required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                               placeholder="e.g. 5.99">
+                    </div>
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Price</label>
-                    <input type="number" name="price" step="0.01" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="e.g. 5.99" required>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Stock Quantity *</label>
+                    <input type="number" name="stock_quantity" min="0" required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                           placeholder="e.g. 50">
                 </div>
                 
-                <!-- Removed Type Field -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+                    <textarea name="description" rows="3" required
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                              placeholder="Describe the bread..."></textarea>
+                </div>
                 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Image</label>
-                    <input type="file" name="image" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500" accept="image/*">
+                    <input type="file" name="image" accept="image/*"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                    <p class="mt-1 text-sm text-gray-500">Optional: Upload a bread image</p>
                 </div>
                 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                    <textarea name="description" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="Describe the bread..." required></textarea>
-                </div>
-                
-                <div class="md:col-span-5">
-                    <button type="submit" class="btn-primary text-white px-6 py-2 rounded-md font-semibold w-full">
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeAddBreadModal()"
+                            class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-6 py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all duration-200">
                         <i class="fas fa-plus mr-2"></i>Add Bread
                     </button>
                 </div>
             </form>
         </div>
+    </div>
 
-        <!-- Search and Breads Table -->
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                <h3 class="text-2xl font-semibold text-gray-800">Bread Collection</h3>
-                <div class="w-full md:w-64">
-                    <input id="search" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="Search breads...">
-                </div>
-            </div>
-
-            <div class="overflow-x-auto">
-                <table id="tbl" class="w-full border-collapse">
-                    <thead>
-                        <tr class="bg-gray-50">
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                            <!-- Removed Type Column -->
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200"></tbody>
-                </table>
-            </div>
-
-            <pre id="breadsMsg" class="mt-4 p-4 bg-gray-100 rounded-md text-sm text-gray-700 font-mono hidden"></pre>
-        </div>
-    </main>
-
-    <script src="js/lib/sweetalert2.min.js"></script>
-    <script src="js/lib/jquery.min.js"></script>
-    <script src="js/lib/axios.min.js"></script>
     <script src="js/app.js"></script>
     <script>
-        // Mobile menu toggle function
-        function toggleMobileMenu() {
+        // Mobile menu toggle
+        window.toggleMobileMenu = function() {
             const mobileMenu = document.getElementById('mobileMenu');
-            mobileMenu.classList.toggle('hidden');
-        }
+            if (mobileMenu) {
+                mobileMenu.classList.toggle('hidden');
+            }
+        };
 
-        // Simple auth state management for demo
-        let isAuthenticated = true; // Set to true since this is the breads page
-
-        function toggleAuthState() {
-            isAuthenticated = !isAuthenticated;
-            updateUI();
-        }
-
-        function updateUI() {
-            const guestElements = document.querySelectorAll('.guest-only');
-            const authElements = document.querySelectorAll('.auth-only');
+        // Tab switching
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.getElementById('breadsTab').classList.add('hidden');
+            document.getElementById('ordersTab').classList.add('hidden');
             
-            guestElements.forEach(el => {
-                el.style.display = isAuthenticated ? 'none' : 'block';
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active', 'border-amber-600', 'text-amber-600');
+                btn.classList.add('border-transparent', 'text-gray-500');
             });
             
-            authElements.forEach(el => {
-                el.style.display = isAuthenticated ? 'block' : 'none';
-            });
+            // Show selected tab
+            if (tabName === 'breads') {
+                document.getElementById('breadsTab').classList.remove('hidden');
+                document.getElementById('tabBreads').classList.add('active', 'border-amber-600', 'text-amber-600');
+                document.getElementById('tabBreads').classList.remove('border-transparent', 'text-gray-500');
+            } else if (tabName === 'orders') {
+                document.getElementById('ordersTab').classList.remove('hidden');
+                document.getElementById('tabOrders').classList.add('active', 'border-amber-600', 'text-amber-600');
+                document.getElementById('tabOrders').classList.remove('border-transparent', 'text-gray-500');
+                loadArtisanOrders();
+            }
         }
 
-        // Logout handlers are handled by app.js globally
+        // Modal functions
+        function openAddBreadModal() {
+            document.getElementById('addBreadModal').classList.remove('hidden');
+        }
 
-        // Initialize UI
-        updateUI();
+        function closeAddBreadModal() {
+            document.getElementById('addBreadModal').classList.add('hidden');
+            document.getElementById('addBreadForm').reset();
+        }
+
+        // Load artisan breads
+        async function loadArtisanBreads(query = '') {
+            const tbody = document.getElementById('breadsTableBody');
+            if (!tbody) return;
+            
+            try {
+                const breads = await api('/artisan/breads' + (query ? `?q=${encodeURIComponent(query)}` : ''));
+                
+                if (breads.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                                <i class="fas fa-bread-slice text-4xl mb-2"></i>
+                                <p>No breads found. Add your first bread!</p>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    tbody.innerHTML = breads.map(bread => {
+                        const imgUrl = bread.image_path 
+                            ? new URL(bread.image_path.replace(/^\//, ''), getBase()).toString()
+                            : new URL('uploads/bread.png', getBase()).toString();
+                        
+                        return `
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4">
+                                    <img src="${imgUrl}" alt="${bread.name}" 
+                                         class="w-16 h-16 object-cover rounded"
+                                         onerror="this.src='${new URL('uploads/bread.png', getBase()).toString()}'">
+                                </td>
+                                <td class="px-6 py-4 font-medium text-gray-900">${bread.name}</td>
+                                <td class="px-6 py-4 text-gray-700">₱${parseFloat(bread.price || 0).toFixed(2)}</td>
+                                <td class="px-6 py-4">
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full ${bread.stock_quantity > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                        ${bread.stock_quantity || 0}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-gray-600 text-sm">${(bread.description || '').substring(0, 50)}${(bread.description || '').length > 50 ? '...' : ''}</td>
+                                <td class="px-6 py-4">
+                                    <a href="edit.html?id=${bread.id}" 
+                                       class="text-amber-600 hover:text-amber-800 font-medium mr-3">
+                                        <i class="fas fa-edit mr-1"></i>Edit
+                                    </a>
+                                    <button onclick="deleteBread(${bread.id})" 
+                                            class="text-red-600 hover:text-red-800 font-medium">
+                                        <i class="fas fa-trash mr-1"></i>Delete
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            } catch (err) {
+                console.error('Load breads error:', err);
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-6 py-8 text-center text-red-500">
+                            <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
+                            <p>Failed to load breads. Please try again.</p>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Delete bread
+        async function deleteBread(id) {
+            const result = await Swal.fire({
+                title: 'Are you sure?',
+                text: "This action cannot be undone!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, delete it!'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    await api(`/breads/${id}`, { method: 'DELETE' });
+                    await Swal.fire('Deleted!', 'Bread has been deleted.', 'success');
+                    loadArtisanBreads(document.getElementById('searchBreads')?.value || '');
+                } catch (err) {
+                    await Swal.fire('Error', err.message || 'Failed to delete bread', 'error');
+                }
+            }
+        }
+
+        // Load artisan orders
+        async function loadArtisanOrders(statusFilter = '') {
+            const ordersList = document.getElementById('ordersList');
+            if (!ordersList) return;
+            
+            try {
+                const orders = await api('/artisan/orders');
+                
+                // Filter by status if provided
+                const filteredOrders = statusFilter 
+                    ? orders.filter(order => order.status === statusFilter)
+                    : orders;
+                
+                if (filteredOrders.length === 0) {
+                    ordersList.innerHTML = `
+                        <div class="bg-white rounded-lg shadow-md p-8 text-center">
+                            <i class="fas fa-shopping-bag text-6xl text-gray-300 mb-4"></i>
+                            <p class="text-xl text-gray-600">No orders found</p>
+                            <p class="text-gray-500 mt-2">${statusFilter ? `No ${statusFilter} orders.` : 'You have no orders yet.'}</p>
+                        </div>
+                    `;
+                } else {
+                    ordersList.innerHTML = filteredOrders.map(order => {
+                        const statusColors = {
+                            'pending': 'bg-yellow-100 text-yellow-800 border-yellow-300',
+                            'processing': 'bg-blue-100 text-blue-800 border-blue-300',
+                            'completed': 'bg-green-100 text-green-800 border-green-300',
+                            'cancelled': 'bg-red-100 text-red-800 border-red-300'
+                        };
+                        const statusClass = statusColors[order.status] || 'bg-gray-100 text-gray-800 border-gray-300';
+                        const orderDate = order.created_at ? new Date(order.created_at).toLocaleDateString('en-US', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }) : 'Date not available';
+                        
+                        return `
+                            <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+                                <div class="bg-amber-50 px-6 py-4 border-b border-amber-200">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <h3 class="text-xl font-bold text-gray-800">Order #${order.id}</h3>
+                                            <p class="text-sm text-gray-600 mt-1">
+                                                <i class="fas fa-user mr-1"></i>${order.customer_name}
+                                            </p>
+                                            <p class="text-sm text-gray-600">
+                                                <i class="fas fa-envelope mr-1"></i>${order.customer_email}
+                                            </p>
+                                            <p class="text-sm text-gray-600">
+                                                <i class="fas fa-calendar-alt mr-1"></i>${orderDate}
+                                            </p>
+                                        </div>
+                                        <div class="text-right">
+                                            <span class="px-4 py-2 rounded-full text-sm font-semibold border-2 ${statusClass}">
+                                                ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                                            </span>
+                                            <p class="text-2xl font-bold text-amber-600 mt-2">₱${parseFloat(order.total_amount || 0).toFixed(2)}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="p-6">
+                                    <h4 class="font-semibold text-gray-700 mb-3">Order Items:</h4>
+                                    <div class="space-y-3 mb-4">
+                                        ${order.items.map(item => {
+                                            const imgUrl = item.bread.image_path 
+                                                ? new URL(item.bread.image_path.replace(/^\//, ''), getBase()).toString()
+                                                : new URL('uploads/bread.png', getBase()).toString();
+                                            
+                                            return `
+                                                <div class="flex items-center space-x-4 py-2 border-b border-gray-100 last:border-0">
+                                                    <img src="${imgUrl}" alt="${item.bread.name}" 
+                                                         class="w-16 h-16 object-cover rounded"
+                                                         onerror="this.src='${new URL('uploads/bread.png', getBase()).toString()}'">
+                                                    <div class="flex-1">
+                                                        <span class="font-medium text-gray-800">${item.bread.name}</span>
+                                                        <span class="text-gray-500 ml-2">x${item.quantity}</span>
+                                                    </div>
+                                                    <span class="font-semibold text-gray-700">₱${parseFloat(item.subtotal || 0).toFixed(2)}</span>
+                                                </div>
+                                            `;
+                                        }).join('')}
+                                    </div>
+                                    ${order.status === 'pending' ? `
+                                        <div class="flex space-x-2 mt-4">
+                                            <button onclick="updateOrderStatus(${order.id}, 'processing')" 
+                                                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+                                                <i class="fas fa-cog mr-2"></i>Mark as Processing
+                                            </button>
+                                            <button onclick="updateOrderStatus(${order.id}, 'cancelled')" 
+                                                    class="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+                                                <i class="fas fa-times mr-2"></i>Cancel Order
+                                            </button>
+                                        </div>
+                                    ` : order.status === 'processing' ? `
+                                        <div class="mt-4">
+                                            <button onclick="updateOrderStatus(${order.id}, 'completed')" 
+                                                    class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+                                                <i class="fas fa-check mr-2"></i>Mark as Completed
+                                            </button>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } catch (err) {
+                console.error('Load orders error:', err);
+                ordersList.innerHTML = `
+                    <div class="bg-white rounded-lg shadow-md p-8 text-center">
+                        <i class="fas fa-exclamation-triangle text-6xl text-red-300 mb-4"></i>
+                        <p class="text-xl text-gray-600">Failed to load orders</p>
+                        <p class="text-gray-500 mt-2">${err.message || 'Please try again later.'}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Update order status
+        async function updateOrderStatus(orderId, status) {
+            const statusLabels = {
+                'pending': 'Pending',
+                'processing': 'Processing',
+                'completed': 'Completed',
+                'cancelled': 'Cancelled'
+            };
+            
+            const result = await Swal.fire({
+                title: 'Update Order Status?',
+                text: `Change order status to "${statusLabels[status]}"?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Update',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#d97706',
+                cancelButtonColor: '#6b7280'
+            });
+            
+            if (result.isConfirmed) {
+                try {
+                    await api(`/artisan/orders/${orderId}/status`, {
+                        method: 'PUT',
+                        data: { status }
+                    });
+                    await Swal.fire({
+                        title: 'Success!',
+                        text: 'Order status updated successfully.',
+                        icon: 'success',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#d97706'
+                    });
+                    loadArtisanOrders(document.getElementById('orderStatusFilter')?.value || '');
+                } catch (err) {
+                    await Swal.fire({
+                        title: 'Error',
+                        text: err.message || 'Failed to update order status.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            }
+        }
+
+        // Initialize page
+        $(document).ready(function() {
+            checkAuthAndRole('artisan');
+            
+            // Tab event listeners
+            document.getElementById('tabBreads').addEventListener('click', () => switchTab('breads'));
+            document.getElementById('tabOrders').addEventListener('click', () => switchTab('orders'));
+            
+            // Search functionality
+            const searchInput = document.getElementById('searchBreads');
+            let searchTimeout;
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        loadArtisanBreads(e.target.value);
+                    }, 300);
+                });
+            }
+            
+            // Order status filter
+            const orderStatusFilter = document.getElementById('orderStatusFilter');
+            if (orderStatusFilter) {
+                orderStatusFilter.addEventListener('change', (e) => {
+                    loadArtisanOrders(e.target.value);
+                });
+            }
+            
+            // Add bread form handler
+            const addBreadForm = document.getElementById('addBreadForm');
+            if (addBreadForm) {
+                addBreadForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    const formData = new FormData(addBreadForm);
+                    
+                    try {
+                        await api('/breads', { method: 'POST', data: formData, multipart: true });
+                        await Swal.fire({
+                            title: 'Success!',
+                            text: 'Bread added successfully!',
+                            icon: 'success',
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#d97706'
+                        });
+                        closeAddBreadModal();
+                        loadArtisanBreads(searchInput?.value || '');
+                    } catch (err) {
+                        await Swal.fire({
+                            title: 'Error',
+                            text: err.message || 'Failed to add bread',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                });
+            }
+            
+            // Load initial data
+            loadArtisanBreads();
+        });
     </script>
-    <script>requireAuth();</script>
 </body>
 </html>

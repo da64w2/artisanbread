@@ -243,6 +243,29 @@
                     });
                     return;
                 }
+                
+                // Check if user is a customer
+                try {
+                    const user = await api('/users/me');
+                    const userType = (user.user_type || '').toLowerCase().trim();
+                    if (userType !== 'customer') {
+                        await Swal.fire({
+                            title: 'Access Denied',
+                            text: 'Only customers can add items to cart. Please login with a customer account.',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                        return;
+                    }
+                } catch (err) {
+                    await Swal.fire({
+                        title: 'Error',
+                        text: 'Failed to verify user role. Please try again.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                    return;
+                }
 
                 await api('/cart', {
                     method: 'POST',
@@ -326,6 +349,16 @@
             // DOM is already loaded
             initializePage();
         }
+        
+        // Check if user is authenticated and restrict cart functionality to customers only
+        $(document).ready(function() {
+            // Products page is public, but cart actions require customer role
+            // The addToCart function already checks authentication
+            // We just need to ensure non-customers can't access customer-specific features
+            if (typeof checkAuthStatus === 'function') {
+                checkAuthStatus();
+            }
+        });
     </script>
 </body>
 </html>

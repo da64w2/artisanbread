@@ -1211,11 +1211,15 @@ async function initEdit() {
     
     const formData = new FormData(form);
     
+    // Add _method=PUT for Laravel method spoofing (needed for file uploads with PUT)
+    formData.append('_method', 'PUT');
+    
     // Remove keepImage field if it exists - we don't need it
     // The backend will handle keeping the existing image if no new image is provided
 
     try {
-      await api(`/breads/${id}`, { method: 'PUT', data: formData, multipart: true });
+      // Use POST with _method=PUT for proper file handling
+      await api(`/breads/${id}`, { method: 'POST', data: formData, multipart: true });
       await showAlert('Success', 'Bread updated successfully!', 'success');
       
       setTimeout(() => {

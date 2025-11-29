@@ -68,6 +68,226 @@
         </div>
     </div>
 
+    <!-- Checkout Modal -->
+    <div id="checkoutModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-full max-w-3xl shadow-lg rounded-md bg-white max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4 sticky top-0 bg-white pb-4 border-b">
+                <h3 class="text-2xl font-bold text-gray-800">Checkout</h3>
+                <button onclick="closeCheckoutModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            
+            <form id="checkoutForm" class="space-y-6">
+                <!-- Shipping Address Section -->
+                <div>
+                    <h4 class="text-lg font-semibold text-gray-800 mb-3">
+                        <i class="fas fa-map-marker-alt mr-2 text-amber-600"></i>Shipping Address
+                    </h4>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Address</label>
+                        <select id="addressSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                            <option value="">Loading addresses...</option>
+                        </select>
+                        <button type="button" onclick="openAddAddressModal()" class="mt-2 text-amber-600 hover:text-amber-700 text-sm">
+                            <i class="fas fa-plus mr-1"></i>Add New Address
+                        </button>
+                    </div>
+                    <div id="manualAddress" class="hidden space-y-3">
+                        <input type="text" id="shippingAddress" placeholder="Enter shipping address" 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                    </div>
+                </div>
+
+                <!-- Shipping Method Section -->
+                <div>
+                    <h4 class="text-lg font-semibold text-gray-800 mb-3">
+                        <i class="fas fa-truck mr-2 text-amber-600"></i>Shipping Method
+                    </h4>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <label class="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-amber-500 transition-colors">
+                            <input type="radio" name="shipping_method" value="pickup" class="mb-2" checked>
+                            <i class="fas fa-store text-2xl text-gray-400 mb-2"></i>
+                            <span class="text-sm font-medium">Pickup</span>
+                            <span class="text-xs text-gray-500">Free</span>
+                        </label>
+                        <label class="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-amber-500 transition-colors">
+                            <input type="radio" name="shipping_method" value="standard" class="mb-2">
+                            <i class="fas fa-truck text-2xl text-gray-400 mb-2"></i>
+                            <span class="text-sm font-medium">Standard</span>
+                            <span class="text-xs text-gray-500">₱50</span>
+                        </label>
+                        <label class="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-amber-500 transition-colors">
+                            <input type="radio" name="shipping_method" value="express" class="mb-2">
+                            <i class="fas fa-shipping-fast text-2xl text-gray-400 mb-2"></i>
+                            <span class="text-sm font-medium">Express</span>
+                            <span class="text-xs text-gray-500">₱100</span>
+                        </label>
+                        <label class="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-amber-500 transition-colors">
+                            <input type="radio" name="shipping_method" value="same_day" class="mb-2">
+                            <i class="fas fa-rocket text-2xl text-gray-400 mb-2"></i>
+                            <span class="text-sm font-medium">Same Day</span>
+                            <span class="text-xs text-gray-500">₱150</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Payment Method Section -->
+                <div>
+                    <h4 class="text-lg font-semibold text-gray-800 mb-3">
+                        <i class="fas fa-credit-card mr-2 text-amber-600"></i>Payment Method
+                    </h4>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        <label class="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-amber-500 transition-colors">
+                            <input type="radio" name="payment_method" value="cash_on_delivery" class="mb-2" checked>
+                            <i class="fas fa-money-bill-wave text-2xl text-gray-400 mb-2"></i>
+                            <span class="text-sm font-medium">Cash on Delivery</span>
+                        </label>
+                        <label class="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-amber-500 transition-colors">
+                            <input type="radio" name="payment_method" value="gcash" class="mb-2">
+                            <i class="fas fa-mobile-alt text-2xl text-gray-400 mb-2"></i>
+                            <span class="text-sm font-medium">GCash</span>
+                        </label>
+                        <label class="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-amber-500 transition-colors">
+                            <input type="radio" name="payment_method" value="maya" class="mb-2">
+                            <i class="fas fa-wallet text-2xl text-gray-400 mb-2"></i>
+                            <span class="text-sm font-medium">Maya</span>
+                        </label>
+                        <label class="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-amber-500 transition-colors">
+                            <input type="radio" name="payment_method" value="credit_card" class="mb-2">
+                            <i class="fas fa-credit-card text-2xl text-gray-400 mb-2"></i>
+                            <span class="text-sm font-medium">Credit Card</span>
+                        </label>
+                        <label class="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-amber-500 transition-colors">
+                            <input type="radio" name="payment_method" value="debit_card" class="mb-2">
+                            <i class="fas fa-credit-card text-2xl text-gray-400 mb-2"></i>
+                            <span class="text-sm font-medium">Debit Card</span>
+                        </label>
+                        <label class="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-amber-500 transition-colors">
+                            <input type="radio" name="payment_method" value="paypal" class="mb-2">
+                            <i class="fab fa-paypal text-2xl text-gray-400 mb-2"></i>
+                            <span class="text-sm font-medium">PayPal</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-3">Order Summary</h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span>Subtotal:</span>
+                            <span id="checkoutSubtotal">₱0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Shipping:</span>
+                            <span id="checkoutShipping">₱0.00</span>
+                        </div>
+                        <div class="flex justify-between font-bold text-lg pt-2 border-t border-gray-300">
+                            <span>Total:</span>
+                            <span id="checkoutTotal" class="text-amber-600">₱0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeCheckoutModal()"
+                            class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-6 py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all duration-200">
+                        <i class="fas fa-check mr-2"></i>Place Order
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Address Modal -->
+    <div id="addAddressModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-2xl font-bold text-gray-800">Add New Address</h3>
+                <button onclick="closeAddAddressModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            
+            <form id="addAddressForm" class="space-y-4">
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Label *</label>
+                        <select name="label" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                            <option value="Home">Home</option>
+                            <option value="Work">Work</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Recipient Name *</label>
+                        <input type="text" name="recipient_name" required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
+                    <input type="text" name="phone_number" required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Address Line 1 *</label>
+                    <input type="text" name="address_line1" required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Address Line 2</label>
+                    <input type="text" name="address_line2"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                </div>
+                
+                <div class="grid md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">City *</label>
+                        <input type="text" name="city" required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Province *</label>
+                        <input type="text" name="province" required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Postal Code *</label>
+                        <input type="text" name="postal_code" required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                    </div>
+                </div>
+                
+                <div class="flex items-center">
+                    <input type="checkbox" name="is_default" id="isDefault" class="mr-2">
+                    <label for="isDefault" class="text-sm text-gray-700">Set as default address</label>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeAddAddressModal()"
+                            class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-6 py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all duration-200">
+                        <i class="fas fa-plus mr-2"></i>Add Address
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+        </div>
+    </div>
+
     <script src="js/app.js"></script>
     <script>
         $(document).ready(function() {
@@ -88,30 +308,72 @@
             }
             
             // Checkout handler
-            $('#btnCheckout').click(async function() {
+            $('#btnCheckout').click(function() {
+                openCheckoutModal();
+            });
+            
+            // Load addresses
+            loadAddresses();
+            
+            // Shipping method change handler
+            $('input[name="shipping_method"]').change(function() {
+                updateCheckoutTotal();
+            });
+            
+            // Address select change handler
+            $('#addressSelect').change(function() {
+                const addressId = $(this).val();
+                if (addressId === 'manual') {
+                    $('#manualAddress').removeClass('hidden');
+                } else {
+                    $('#manualAddress').addClass('hidden');
+                }
+            });
+            
+            // Checkout form submit
+            $('#checkoutForm').submit(async function(e) {
+                e.preventDefault();
+                
+                const paymentMethod = $('input[name="payment_method"]:checked').val();
+                const shippingMethod = $('input[name="shipping_method"]:checked').val();
+                const addressId = $('#addressSelect').val();
+                const shippingAddress = addressId === 'manual' 
+                    ? $('#shippingAddress').val() 
+                    : $('#addressSelect option:selected').text();
+                
+                if (!shippingAddress || shippingAddress === 'Loading addresses...' || shippingAddress === 'No addresses found') {
+                    await Swal.fire({
+                        title: 'Error',
+                        text: 'Please select or enter a shipping address',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                    return;
+                }
+                
                 try {
-                    const result = await Swal.fire({
-                        title: 'Confirm Checkout',
-                        text: 'Are you sure you want to proceed with checkout?',
-                        icon: 'question',
-                        showCancelButton: true,
-                        confirmButtonText: 'Yes, Checkout',
-                        cancelButtonText: 'Cancel',
-                        confirmButtonColor: '#d97706',
-                        cancelButtonColor: '#6b7280'
+                    const orderData = {
+                        payment_method: paymentMethod,
+                        shipping_method: shippingMethod,
+                        shipping_address: shippingAddress,
+                        address_id: addressId && addressId !== 'manual' ? addressId : null
+                    };
+                    
+                    const order = await api('/orders', { 
+                        method: 'POST',
+                        data: orderData
                     });
                     
-                    if (result.isConfirmed) {
-                        const order = await api('/orders', { method: 'POST' });
-                        await Swal.fire({
-                            title: 'Success!',
-                            text: 'Your order has been placed successfully!',
-                            icon: 'success',
-                            confirmButtonText: 'View Orders',
-                            confirmButtonColor: '#d97706'
-                        });
-                        window.location.href = 'orders.html';
-                    }
+                    await Swal.fire({
+                        title: 'Success!',
+                        text: 'Your order has been placed successfully!',
+                        icon: 'success',
+                        confirmButtonText: 'View Orders',
+                        confirmButtonColor: '#d97706'
+                    });
+                    
+                    closeCheckoutModal();
+                    window.location.href = 'orders.html';
                 } catch (err) {
                     await Swal.fire({
                         title: 'Error',
@@ -121,6 +383,112 @@
                     });
                 }
             });
+            
+            // Add address form submit
+            $('#addAddressForm').submit(async function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const data = {
+                    label: formData.get('label'),
+                    recipient_name: formData.get('recipient_name'),
+                    phone_number: formData.get('phone_number'),
+                    address_line1: formData.get('address_line1'),
+                    address_line2: formData.get('address_line2'),
+                    city: formData.get('city'),
+                    province: formData.get('province'),
+                    postal_code: formData.get('postal_code'),
+                    country: 'Philippines',
+                    is_default: formData.get('is_default') === 'on'
+                };
+                
+                try {
+                    const address = await api('/addresses', {
+                        method: 'POST',
+                        data: data
+                    });
+                    
+                    await Swal.fire({
+                        title: 'Success!',
+                        text: 'Address added successfully!',
+                        icon: 'success',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#d97706'
+                    });
+                    
+                    closeAddAddressModal();
+                    loadAddresses();
+                } catch (err) {
+                    await Swal.fire({
+                        title: 'Error',
+                        text: err.message || 'Failed to add address',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            });
+        });
+        
+        // Modal functions
+        function openCheckoutModal() {
+            document.getElementById('checkoutModal').classList.remove('hidden');
+            updateCheckoutTotal();
+        }
+        
+        function closeCheckoutModal() {
+            document.getElementById('checkoutModal').classList.add('hidden');
+        }
+        
+        function openAddAddressModal() {
+            document.getElementById('addAddressModal').classList.remove('hidden');
+        }
+        
+        function closeAddAddressModal() {
+            document.getElementById('addAddressModal').classList.add('hidden');
+            document.getElementById('addAddressForm').reset();
+        }
+        
+        // Load addresses
+        async function loadAddresses() {
+            try {
+                const addresses = await api('/addresses');
+                const select = document.getElementById('addressSelect');
+                
+                if (addresses.length === 0) {
+                    select.innerHTML = '<option value="manual">No addresses found - Enter manually</option>';
+                    $('#manualAddress').removeClass('hidden');
+                } else {
+                    let html = '<option value="">Select an address</option>';
+                    addresses.forEach(addr => {
+                        const addressText = `${addr.recipient_name}, ${addr.address_line1}, ${addr.city}, ${addr.province} ${addr.postal_code}`;
+                        html += `<option value="${addr.id}" ${addr.is_default ? 'selected' : ''}>${addressText}${addr.is_default ? ' (Default)' : ''}</option>`;
+                    });
+                    html += '<option value="manual">Enter address manually</option>';
+                    select.innerHTML = html;
+                }
+            } catch (err) {
+                console.error('Failed to load addresses:', err);
+                document.getElementById('addressSelect').innerHTML = '<option value="manual">Error loading addresses - Enter manually</option>';
+                $('#manualAddress').removeClass('hidden');
+            }
+        }
+        
+        // Update checkout total
+        function updateCheckoutTotal() {
+            const subtotal = parseFloat(document.getElementById('cartTotal').textContent.replace('₱', '').replace(',', '')) || 0;
+            const shippingMethod = $('input[name="shipping_method"]:checked').val();
+            
+            let shippingCost = 0;
+            if (shippingMethod === 'standard') shippingCost = 50;
+            else if (shippingMethod === 'express') shippingCost = 100;
+            else if (shippingMethod === 'same_day') shippingCost = 150;
+            
+            const total = subtotal + shippingCost;
+            
+            document.getElementById('checkoutSubtotal').textContent = `₱${subtotal.toFixed(2)}`;
+            document.getElementById('checkoutShipping').textContent = `₱${shippingCost.toFixed(2)}`;
+            document.getElementById('checkoutTotal').textContent = `₱${total.toFixed(2)}`;
+        }
         });
     </script>
 </body>

@@ -341,8 +341,20 @@
                 e.preventDefault();
                 
                 const formData = new FormData(this);
+                const addressValue = (formData.get('address') || '').trim();
+                
+                if (!addressValue) {
+                    await Swal.fire({
+                        title: 'Error',
+                        text: 'Please enter an address',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                    return;
+                }
+                
                 const data = {
-                    address: formData.get('address'),
+                    address: addressValue,
                     is_default: formData.get('is_default') === 'on'
                 };
                 

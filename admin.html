@@ -104,18 +104,7 @@
     </div>
 
     <script src="js/app.js"></script>
-    <script>
-        // Admin-specific JavaScript will be in app.js
-        $(document).ready(async function() {
-            // Wait for authentication check before loading users
-            const isAuthorized = await checkAuthAndRole('admin');
-            if (isAuthorized) {
-                loadUsers();
-            } else {
-                console.error('Admin access denied - not loading users');
-            }
-        });
-    </script>
+    <script src="js/admin-script.js"></script>
 </body>
 </html>
 

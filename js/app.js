@@ -1943,7 +1943,5 @@ window.cancelOrder = cancelOrder;
 window.loadArtisanDashboard = loadArtisanDashboard;
 window.loadBreadDetail = loadBreadDetail;
 window.addToCartFromDetail = addToCartFromDetail;
-window.loadArtisanBreads = loadArtisanBreads;
-window.loadArtisanOrders = loadArtisanOrders;
-window.updateOrderStatus = updateOrderStatus;
-window.deleteBread = deleteBread;
+// Note: loadArtisanBreads, loadArtisanOrders, updateOrderStatus, deleteBread are defined in bread.html
+// They are not needed here as they're page-specific functions

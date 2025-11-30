@@ -1531,13 +1531,39 @@ async function loadCart() {
     
     if (cartItems) {
       const imgBase = getBase();
-      cartItems.innerHTML = cart.items.map(item => {
+      // Add select all checkbox header
+      const hasSelectAll = document.getElementById('selectAllCheckbox');
+      if (!hasSelectAll && cart.items.length > 0) {
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'px-6 py-3 bg-gray-50 border-b border-gray-200';
+        headerDiv.innerHTML = `
+          <label class="flex items-center cursor-pointer">
+            <input type="checkbox" id="selectAllCheckbox" class="w-5 h-5 text-amber-600 rounded focus:ring-amber-500" checked onchange="toggleSelectAll(this.checked)">
+            <span class="ml-2 text-sm font-medium text-gray-700">Select All</span>
+          </label>
+        `;
+        cartItems.insertBefore(headerDiv, cartItems.firstChild);
+      }
+      
+      cartItems.innerHTML = (cartItems.querySelector('.bg-gray-50') ? cartItems.querySelector('.bg-gray-50').outerHTML : '') + cart.items.map(item => {
         const imgUrl = item.bread.image_path 
           ? new URL(item.bread.image_path.replace(/^\//, ''), imgBase).toString()
           : new URL('uploads/bread.png', imgBase).toString();
+        const stockQty = item.bread.stock_quantity ?? 0;
+        const stockClass = stockQty === 0 ? 'text-red-600 font-semibold' : stockQty < 10 ? 'text-orange-600' : 'text-green-600';
+        const stockText = stockQty === 0 ? 'Out of Stock' : `${stockQty} left`;
         
         return `
           <div class="p-6 flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6 hover:bg-gray-50 transition-colors">
+            <div class="flex items-center">
+              <input type="checkbox" 
+                     class="cart-item-checkbox w-5 h-5 text-amber-600 rounded focus:ring-amber-500 mr-4" 
+                     data-cart-id="${item.id}"
+                     data-price="${item.bread.price}"
+                     data-quantity="${item.quantity}"
+                     checked
+                     onchange="updateCartTotal()">
+            </div>
             <img src="${imgUrl}" 
                  alt="${item.bread.name}" 
                  class="w-24 h-24 object-cover rounded-lg shadow"
@@ -1545,6 +1571,9 @@ async function loadCart() {
             <div class="flex-1 w-full md:w-auto">
               <h3 class="text-lg font-bold text-gray-800 mb-1">${item.bread.name}</h3>
               <p class="text-gray-600 mb-2">₱${parseFloat(item.bread.price || 0).toFixed(2)} each</p>
+              <p class="text-sm ${stockClass} mb-1">
+                <i class="fas fa-box mr-1"></i>${stockText}
+              </p>
               <p class="text-sm text-gray-500">Subtotal: ₱${parseFloat(item.subtotal || 0).toFixed(2)}</p>
             </div>
             <div class="flex items-center space-x-3">
@@ -1554,7 +1583,8 @@ async function loadCart() {
               </button>
               <span class="text-lg font-semibold w-8 text-center">${item.quantity}</span>
               <button onclick="updateCartQuantity(${item.id}, ${item.quantity + 1})" 
-                      class="w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded-full transition-colors">
+                      class="w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded-full transition-colors"
+                      ${stockQty <= item.quantity ? 'disabled class="w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-400 rounded-full cursor-not-allowed"' : ''}>
                 <i class="fas fa-plus text-xs"></i>
               </button>
             </div>
@@ -1565,12 +1595,16 @@ async function loadCart() {
           </div>
         `;
       }).join('');
+      
+      // Initialize select all checkbox
+      const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+      if (selectAllCheckbox) {
+        selectAllCheckbox.checked = true;
+      }
     }
     
-    const cartTotalEl = document.getElementById('cartTotal');
-    if (cartTotalEl) {
-      cartTotalEl.textContent = `₱${parseFloat(cart.total || 0).toFixed(2)}`;
-    }
+    // Update total based on selected items
+    updateCartTotal();
   } catch (err) {
     console.error('Failed to load cart:', err);
     if (cartLoading) cartLoading.classList.add('hidden');
@@ -1584,6 +1618,43 @@ async function loadCart() {
   }
 }
 
+// Update cart total based on selected items
+function updateCartTotal() {
+  const checkboxes = document.querySelectorAll('.cart-item-checkbox:checked');
+  let total = 0;
+  
+  checkboxes.forEach(checkbox => {
+    const price = parseFloat(checkbox.dataset.price || 0);
+    const quantity = parseInt(checkbox.dataset.quantity || 0);
+    total += price * quantity;
+  });
+  
+  const cartTotalEl = document.getElementById('cartTotal');
+  if (cartTotalEl) {
+    cartTotalEl.textContent = `₱${total.toFixed(2)}`;
+  }
+  
+  // Update checkout modal total if open
+  if (typeof updateCheckoutTotal === 'function') {
+    updateCheckoutTotal();
+  }
+}
+
+// Toggle select all checkboxes
+function toggleSelectAll(checked) {
+  const checkboxes = document.querySelectorAll('.cart-item-checkbox');
+  checkboxes.forEach(checkbox => {
+    checkbox.checked = checked;
+  });
+  updateCartTotal();
+}
+
+// Get selected cart item IDs
+function getSelectedCartItems() {
+  const checkboxes = document.querySelectorAll('.cart-item-checkbox:checked');
+  return Array.from(checkboxes).map(checkbox => parseInt(checkbox.dataset.cartId));
+}
+
 async function updateCartQuantity(id, quantity) {
   if (quantity < 1) {
     removeFromCart(id);
@@ -1593,6 +1664,12 @@ async function updateCartQuantity(id, quantity) {
     await api(`/cart/${id}`, { method: 'PUT', data: { quantity } });
     loadCart();
     updateCartCount();
+    // Update total after reload
+    setTimeout(() => {
+      if (typeof updateCartTotal === 'function') {
+        updateCartTotal();
+      }
+    }, 100);
   } catch (err) {
     await Swal.fire('Error', err.message || 'Failed to update cart', 'error');
   }
@@ -1603,6 +1680,12 @@ async function removeFromCart(id) {
     await api(`/cart/${id}`, { method: 'DELETE' });
     loadCart();
     updateCartCount();
+    // Update total after reload
+    setTimeout(() => {
+      if (typeof updateCartTotal === 'function') {
+        updateCartTotal();
+      }
+    }, 100);
   } catch (err) {
     await Swal.fire('Error', 'Failed to remove item', 'error');
   }
@@ -1925,6 +2008,9 @@ async function addToCartFromDetail(breadId) {
 
 // Expose functions globally for use in HTML
 window.requireAuth = requireAuth;
+window.updateCartTotal = updateCartTotal;
+window.toggleSelectAll = toggleSelectAll;
+window.getSelectedCartItems = getSelectedCartItems;
 window.checkAuthStatus = checkAuthStatus;
 window.loadProfile = loadProfile;
 window.updateProfileImage = updateProfileImage;

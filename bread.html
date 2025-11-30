@@ -282,9 +282,13 @@
                         return `
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4">
-                                    <img src="${imgUrl}" alt="${bread.name}" 
-                                         class="w-16 h-16 object-cover rounded"
-                                         onerror="this.src='${new URL('uploads/bread.png', getBase()).toString()}'">
+                                    <div class="relative w-16 h-16 inline-block">
+                                        <div class="image-loading-spinner"></div>
+                                        <img src="${imgUrl}" alt="${bread.name}" 
+                                             class="w-16 h-16 object-cover rounded"
+                                             onload="this.classList.add('loaded'); this.parentElement.querySelector('.image-loading-spinner')?.classList.add('hidden');"
+                                             onerror="this.classList.add('loaded'); this.parentElement.querySelector('.image-loading-spinner')?.classList.add('hidden'); this.src='${new URL('uploads/bread.png', getBase()).toString()}'">
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4 font-medium text-gray-900">${bread.name}</td>
                                 <td class="px-6 py-4 text-gray-700">₱${parseFloat(bread.price || 0).toFixed(2)}</td>

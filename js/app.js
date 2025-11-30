@@ -1583,8 +1583,8 @@ async function loadCart() {
               </button>
               <span class="text-lg font-semibold w-8 text-center">${item.quantity}</span>
               <button onclick="updateCartQuantity(${item.id}, ${item.quantity + 1})" 
-                      class="w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded-full transition-colors"
-                      ${stockQty <= item.quantity ? 'disabled class="w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-400 rounded-full cursor-not-allowed"' : ''}>
+                      ${stockQty <= item.quantity ? 'disabled' : ''}
+                      class="${stockQty <= item.quantity ? 'w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-400 rounded-full cursor-not-allowed' : 'w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded-full transition-colors'}">
                 <i class="fas fa-plus text-xs"></i>
               </button>
             </div>
@@ -1622,6 +1622,7 @@ async function loadCart() {
 function updateCartTotal() {
   const checkboxes = document.querySelectorAll('.cart-item-checkbox:checked');
   let total = 0;
+  const selectedCount = checkboxes.length;
   
   checkboxes.forEach(checkbox => {
     const price = parseFloat(checkbox.dataset.price || 0);
@@ -1632,6 +1633,24 @@ function updateCartTotal() {
   const cartTotalEl = document.getElementById('cartTotal');
   if (cartTotalEl) {
     cartTotalEl.textContent = `₱${total.toFixed(2)}`;
+  }
+  
+  // Update selected count
+  const selectedCountEl = document.getElementById('selectedCount');
+  if (selectedCountEl) {
+    selectedCountEl.textContent = `${selectedCount} item${selectedCount !== 1 ? 's' : ''}`;
+  }
+  
+  // Enable/disable checkout button
+  const checkoutBtn = document.getElementById('btnCheckout');
+  if (checkoutBtn) {
+    if (selectedCount > 0) {
+      checkoutBtn.disabled = false;
+      checkoutBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+    } else {
+      checkoutBtn.disabled = true;
+      checkoutBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    }
   }
   
   // Update checkout modal total if open

@@ -161,9 +161,16 @@ async function api(path, options = {}) {
             showAlert('Invalid Token', 'Your session has expired or token is invalid. Please login again.', 'error');
           }
           reject(responseData);
-        } else if (status === 0 || textStatus === 'error') {
-          // Network error
+        } else if (status === 0 || (textStatus === 'error' && status === 0)) {
+          // Network error (only if status is actually 0)
           reject({ message: 'Network error. Please check your connection.' });
+        } else if (status >= 400 && status < 500) {
+          // Client errors (400-499) - use the error message from response
+          const errorMessage = responseData?.message || responseData?.error || `Error ${status}: ${jqXHR.statusText}`;
+          reject({ message: errorMessage, status: status, responseData: responseData });
+        } else if (status >= 500) {
+          // Server errors (500+)
+          reject({ message: responseData?.message || `Server error (${status})`, status: status, responseData: responseData });
         } else {
           // Other error
           reject(responseData);
@@ -1535,7 +1542,7 @@ async function deleteUser(id) {
       loadUsers();
     } catch (err) {
       // Display the error message from backend (e.g., "You cannot delete this admin account")
-      const errorMessage = err.message || err.responseJSON?.message || 'Failed to delete user';
+      const errorMessage = err.message || err.responseData?.message || err.responseJSON?.message || 'Failed to delete user';
       await Swal.fire('Error', errorMessage, 'error');
     }
   }

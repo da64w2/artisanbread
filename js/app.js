@@ -1812,10 +1812,14 @@ function sortOrdersByStatus(orders) {
   });
 }
 
+// Store all orders for filtering
+let allOrders = [];
+
 async function loadOrders() {
   const ordersLoading = document.getElementById('ordersLoading');
   const ordersList = document.getElementById('ordersList');
   const ordersEmpty = document.getElementById('ordersEmpty');
+  const ordersFilterSection = document.getElementById('ordersFilterSection');
   
   if (ordersLoading) ordersLoading.classList.remove('hidden');
   if (ordersEmpty) ordersEmpty.classList.add('hidden');
@@ -1829,17 +1833,92 @@ async function loadOrders() {
     if (!orders || orders.length === 0) {
       if (ordersEmpty) ordersEmpty.classList.remove('hidden');
       if (ordersList) ordersList.classList.add('hidden');
+      if (ordersFilterSection) ordersFilterSection.classList.add('hidden');
       return;
     }
     
-    // Sort orders by status: Pending, Processing, Completed, Cancelled
-    const sortedOrders = sortOrdersByStatus([...orders]);
+    // Store all orders for filtering
+    allOrders = orders;
     
+    // Show filter section if orders exist
+    if (ordersFilterSection) ordersFilterSection.classList.remove('hidden');
+    
+    // Apply filters and display orders
+    applyOrderFilters();
+  } catch (err) {
+    console.error('Failed to load orders:', err);
+    if (ordersLoading) ordersLoading.classList.add('hidden');
+    if (ordersEmpty) {
+      ordersEmpty.classList.remove('hidden');
+      const emptyText = ordersEmpty.querySelector('p');
+      if (emptyText) {
+        emptyText.textContent = err.message || 'Failed to load orders. Please try again.';
+      }
+    }
+    if (ordersFilterSection) ordersFilterSection.classList.add('hidden');
+  }
+}
+
+function applyOrderFilters() {
+  const ordersList = document.getElementById('ordersList');
+  const ordersEmpty = document.getElementById('ordersEmpty');
+  const searchInput = document.getElementById('orderSearchInput');
+  const statusFilter = document.getElementById('orderStatusFilter');
+  
+  if (!ordersList) return;
+  
+  // Get filter values
+  const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+  const statusFilterValue = statusFilter ? statusFilter.value : '';
+  
+  // Filter orders
+  let filteredOrders = [...allOrders];
+  
+  // Filter by status
+  if (statusFilterValue) {
+    filteredOrders = filteredOrders.filter(order => order.status === statusFilterValue);
+  }
+  
+  // Filter by search term (order ID or item names)
+  if (searchTerm) {
+    filteredOrders = filteredOrders.filter(order => {
+      // Search by order ID
+      if (order.id.toString().includes(searchTerm)) {
+        return true;
+      }
+      
+      // Search by item names
+      if (order.items && order.items.some(item => {
+        const itemName = item.bread ? item.bread.name.toLowerCase() : '';
+        return itemName.includes(searchTerm);
+      })) {
+        return true;
+      }
+      
+      return false;
+    });
+  }
+  
+  // Sort orders by status: Pending, Processing, Completed, Cancelled
+  const sortedOrders = sortOrdersByStatus(filteredOrders);
+  
+  // Display results
+  if (sortedOrders.length === 0) {
+    if (ordersEmpty) {
+      ordersEmpty.classList.remove('hidden');
+      const emptyText = ordersEmpty.querySelector('p');
+      if (emptyText) {
+        emptyText.textContent = searchTerm || statusFilterValue 
+          ? 'No orders match your filters.' 
+          : 'You have no orders yet';
+      }
+    }
+    if (ordersList) ordersList.classList.add('hidden');
+  } else {
     if (ordersEmpty) ordersEmpty.classList.add('hidden');
     if (ordersList) ordersList.classList.remove('hidden');
     
-    if (ordersList) {
-      ordersList.innerHTML = sortedOrders.map(order => {
+    ordersList.innerHTML = sortedOrders.map(order => {
         const statusColors = {
           'completed': 'bg-green-100 text-green-800 border-green-300',
           'cancelled': 'bg-red-100 text-red-800 border-red-300',
@@ -1895,18 +1974,7 @@ async function loadOrders() {
             </div>
           </div>
         `;
-      }).join('');
-    }
-  } catch (err) {
-    console.error('Failed to load orders:', err);
-    if (ordersLoading) ordersLoading.classList.add('hidden');
-    if (ordersEmpty) {
-      ordersEmpty.classList.remove('hidden');
-      const emptyText = ordersEmpty.querySelector('p');
-      if (emptyText) {
-        emptyText.textContent = err.message || 'Failed to load orders. Please try again.';
-      }
-    }
+    }).join('');
   }
 }
 
@@ -2123,6 +2191,7 @@ window.updateCartQuantity = updateCartQuantity;
 window.removeFromCart = removeFromCart;
 window.updateCartCount = updateCartCount;
 window.loadOrders = loadOrders;
+window.applyOrderFilters = applyOrderFilters;
 window.cancelOrder = cancelOrder;
 window.loadArtisanDashboard = loadArtisanDashboard;
 window.loadBreadDetail = loadBreadDetail;

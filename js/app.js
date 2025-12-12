@@ -1617,7 +1617,8 @@ async function loadCart() {
             </div>
             <div class="flex items-center space-x-3">
               <button onclick="updateCartQuantity(${item.id}, ${item.quantity - 1})" 
-                      class="w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded-full transition-colors">
+                      ${item.quantity <= 1 ? 'disabled' : ''}
+                      class="${item.quantity <= 1 ? 'w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-400 rounded-full cursor-not-allowed' : 'w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded-full transition-colors'}">
                 <i class="fas fa-minus text-xs"></i>
               </button>
               <span class="text-lg font-semibold w-8 text-center">${Math.max(0, item.quantity)}</span>

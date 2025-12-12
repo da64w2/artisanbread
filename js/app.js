@@ -1787,6 +1787,31 @@ async function updateCartCount() {
 }
 
 // Order Functions
+// Helper function to sort orders by status: Pending, Processing, Completed, Cancelled
+function sortOrdersByStatus(orders) {
+  const statusPriority = {
+    'pending': 1,
+    'processing': 2,
+    'completed': 3,
+    'cancelled': 4
+  };
+  
+  return orders.sort((a, b) => {
+    const priorityA = statusPriority[a.status] || 99;
+    const priorityB = statusPriority[b.status] || 99;
+    
+    // First sort by status priority
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB;
+    }
+    
+    // If same status, sort by created_at (newest first)
+    const dateA = new Date(a.created_at || 0);
+    const dateB = new Date(b.created_at || 0);
+    return dateB - dateA;
+  });
+}
+
 async function loadOrders() {
   const ordersLoading = document.getElementById('ordersLoading');
   const ordersList = document.getElementById('ordersList');
@@ -1807,11 +1832,14 @@ async function loadOrders() {
       return;
     }
     
+    // Sort orders by status: Pending, Processing, Completed, Cancelled
+    const sortedOrders = sortOrdersByStatus([...orders]);
+    
     if (ordersEmpty) ordersEmpty.classList.add('hidden');
     if (ordersList) ordersList.classList.remove('hidden');
     
     if (ordersList) {
-      ordersList.innerHTML = orders.map(order => {
+      ordersList.innerHTML = sortedOrders.map(order => {
         const statusColors = {
           'completed': 'bg-green-100 text-green-800 border-green-300',
           'cancelled': 'bg-red-100 text-red-800 border-red-300',

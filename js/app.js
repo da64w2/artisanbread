@@ -1621,7 +1621,7 @@ async function loadCart() {
                       class="${item.quantity <= 1 ? 'w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-400 rounded-full cursor-not-allowed' : 'w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded-full transition-colors'}">
                 <i class="fas fa-minus text-xs"></i>
               </button>
-              <span class="text-lg font-semibold w-8 text-center">${Math.max(0, item.quantity)}</span>
+              <span class="text-lg font-semibold w-8 text-center">${item.quantity}</span>
               <button onclick="updateCartQuantity(${item.id}, ${item.quantity + 1})" 
                       ${stockQty <= item.quantity ? 'disabled' : ''}
                       class="${stockQty <= item.quantity ? 'w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-400 rounded-full cursor-not-allowed' : 'w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded-full transition-colors'}">
@@ -1715,10 +1715,9 @@ function getSelectedCartItems() {
 }
 
 async function updateCartQuantity(id, quantity) {
-   // Don't delete item when quantity decreases - allow quantity to be 0 or more
-  // Set minimum to 0 instead of deleting
-  if (quantity < 0) {
-    quantity = 0;
+  // Enforce minimum quantity of 1
+  if (quantity < 1) {
+    quantity = 1;
   }
   try {
     await api(`/cart/${id}`, { method: 'PUT', data: { quantity } });

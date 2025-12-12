@@ -63,32 +63,11 @@ function setAuthUI(isLoggedIn) {
   });
 }
 
-// Enhanced API function with better error handling using AXIOS
+// Enhanced API function with better error handling using jQuery AJAX
 async function api(path, options = {}) {
   const { method = 'GET', data, multipart } = options;
   
-  // Configure axios defaults
-  const axiosConfig = {
-    method: method.toLowerCase(),
-    withCredentials: true,
-    headers: {}
-  };
-
   const token = getToken();
-
-  if (multipart) {
-    // For FormData, let axios handle the content-type with boundary
-    axiosConfig.data = data;
-    console.log('Multipart request - FormData body:', data);
-    console.log('FormData entries in API:', Array.from(data.entries()));
-  } else if (data) {
-    axiosConfig.data = data;
-    axiosConfig.headers['Content-Type'] = 'application/json';
-  }
-
-  if (token) {
-    axiosConfig.headers['Authorization'] = `Bearer ${token}`;
-  }
 
   // Build endpoint URL
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
@@ -102,55 +81,95 @@ async function api(path, options = {}) {
     endpoint = new URL(`api${normalizedPath}`, base).toString();
   }
 
-  try {
-    console.log('API call to:', endpoint);
-    console.log('API config:', axiosConfig);
-    
-    const response = await axios(endpoint, axiosConfig);
-    
-    // Axios automatically parses JSON responses
-    const responseData = response.data || {};
-    
-    console.log('API response:', responseData);
-    return responseData;
-    
-  } catch (error) {
-    console.error('API error:', error);
-    
-    // Handle axios error structure
-    if (error.response) {
-      // Server responded with error status
-      const status = error.response.status;
-      const responseData = error.response.data || {};
-      
-      if (status === 401) {
-        // Only logout if we have a token and the response indicates invalid token
-        if (token && responseData && responseData.message && 
-            (responseData.message.includes('Invalid') || responseData.message.includes('expired'))) {
-          clearToken();
-          setAuthUI(false);
-          // Call logout endpoint to handle server-side logout
-          try {
-            await axios.post(new URL('api/auth/logout', getBase()).toString(), {}, {
-              withCredentials: true,
-              headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-            });
-          } catch (e) {
-            // Ignore logout errors
-          }
-          await showAlert('Invalid Token', 'Your session has expired or token is invalid. Please login again.', 'error');
-        }
-        throw responseData;
-      }
-      throw responseData;
-    } else if (error.request) {
-      // Network error
-      throw { message: 'Network error. Please check your connection.' };
-    } else {
-      // Other error
-      throw { message: error.message || 'Unknown error occurred' };
-    }
+  // Configure jQuery AJAX defaults
+  const ajaxConfig = {
+    url: endpoint,
+    method: method.toUpperCase(),
+    xhrFields: {
+      withCredentials: true
+    },
+    headers: {}
+  };
+
+  if (token) {
+    ajaxConfig.headers['Authorization'] = `Bearer ${token}`;
   }
+
+  if (multipart) {
+    // For FormData, jQuery will automatically set content-type with boundary
+    ajaxConfig.data = data;
+    ajaxConfig.processData = false; // Don't process FormData
+    ajaxConfig.contentType = false; // Let browser set content-type with boundary
+    console.log('Multipart request - FormData body:', data);
+    console.log('FormData entries in API:', Array.from(data.entries()));
+  } else if (data) {
+    ajaxConfig.data = JSON.stringify(data);
+    ajaxConfig.contentType = 'application/json';
+    ajaxConfig.dataType = 'json';
+  } else {
+    ajaxConfig.dataType = 'json';
+  }
+
+  return new Promise((resolve, reject) => {
+    console.log('API call to:', endpoint);
+    console.log('API config:', ajaxConfig);
+    
+    $.ajax(ajaxConfig)
+      .done(function(responseData) {
+        console.log('API response:', responseData);
+        resolve(responseData || {});
+      })
+      .fail(function(jqXHR, textStatus, errorThrown) {
+        console.error('API error:', {
+          status: jqXHR.status,
+          statusText: jqXHR.statusText,
+          responseText: jqXHR.responseText,
+          textStatus: textStatus,
+          errorThrown: errorThrown
+        });
+        
+        // Parse error response
+        let responseData = {};
+        try {
+          if (jqXHR.responseJSON) {
+            responseData = jqXHR.responseJSON;
+          } else if (jqXHR.responseText) {
+            responseData = JSON.parse(jqXHR.responseText);
+          }
+        } catch (e) {
+          // If parsing fails, use default error message
+          responseData = { message: jqXHR.responseText || errorThrown || 'Unknown error occurred' };
+        }
+        
+        const status = jqXHR.status;
+        
+        if (status === 401) {
+          // Only logout if we have a token and the response indicates invalid token
+          if (token && responseData && responseData.message && 
+              (responseData.message.includes('Invalid') || responseData.message.includes('expired'))) {
+            clearToken();
+            setAuthUI(false);
+            // Call logout endpoint to handle server-side logout
+            $.ajax({
+              url: new URL('api/auth/logout', getBase()).toString(),
+              method: 'POST',
+              xhrFields: { withCredentials: true },
+              headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+            }).fail(function() {
+              // Ignore logout errors
+            });
+            showAlert('Invalid Token', 'Your session has expired or token is invalid. Please login again.', 'error');
+          }
+          reject(responseData);
+        } else if (status === 0 || textStatus === 'error') {
+          // Network error
+          reject({ message: 'Network error. Please check your connection.' });
+        } else {
+          // Other error
+          reject(responseData);
+        }
+      });
+  });
 }
 
 // Server-verified authentication check
@@ -1601,7 +1620,7 @@ async function loadCart() {
                       class="w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded-full transition-colors">
                 <i class="fas fa-minus text-xs"></i>
               </button>
-              <span class="text-lg font-semibold w-8 text-center">${item.quantity}</span>
+              <span class="text-lg font-semibold w-8 text-center">${Math.max(0, item.quantity)}</span>
               <button onclick="updateCartQuantity(${item.id}, ${item.quantity + 1})" 
                       ${stockQty <= item.quantity ? 'disabled' : ''}
                       class="${stockQty <= item.quantity ? 'w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-400 rounded-full cursor-not-allowed' : 'w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded-full transition-colors'}">
@@ -1695,9 +1714,10 @@ function getSelectedCartItems() {
 }
 
 async function updateCartQuantity(id, quantity) {
-  if (quantity < 1) {
-    removeFromCart(id);
-    return;
+   // Don't delete item when quantity decreases - allow quantity to be 0 or more
+  // Set minimum to 0 instead of deleting
+  if (quantity < 0) {
+    quantity = 0;
   }
   try {
     await api(`/cart/${id}`, { method: 'PUT', data: { quantity } });

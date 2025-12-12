@@ -1534,7 +1534,9 @@ async function deleteUser(id) {
       await Swal.fire('Deleted!', 'User has been deleted.', 'success');
       loadUsers();
     } catch (err) {
-      await Swal.fire('Error', err.message || 'Failed to delete user', 'error');
+      // Display the error message from backend (e.g., "You cannot delete this admin account")
+      const errorMessage = err.message || err.responseJSON?.message || 'Failed to delete user';
+      await Swal.fire('Error', errorMessage, 'error');
     }
   }
 }

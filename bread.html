@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="css/style.css">
     <script src="js/lib/sweetalert2.min.js"></script>
     <script src="js/lib/jquery.min.js"></script>
-    <script src="js/lib/axios.min.js"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <!-- Navigation -->
@@ -348,6 +347,31 @@
             }
         }
 
+        // Helper function to sort orders by status: Pending, Processing, Completed, Cancelled
+        function sortOrdersByStatus(orders) {
+            const statusPriority = {
+                'pending': 1,
+                'processing': 2,
+                'completed': 3,
+                'cancelled': 4
+            };
+            
+            return orders.sort((a, b) => {
+                const priorityA = statusPriority[a.status] || 99;
+                const priorityB = statusPriority[b.status] || 99;
+                
+                // First sort by status priority
+                if (priorityA !== priorityB) {
+                    return priorityA - priorityB;
+                }
+                
+                // If same status, sort by created_at (newest first)
+                const dateA = new Date(a.created_at || 0);
+                const dateB = new Date(b.created_at || 0);
+                return dateB - dateA;
+            });
+        }
+
         // Load artisan orders
         async function loadArtisanOrders(statusFilter = '') {
             const ordersList = document.getElementById('ordersList');
@@ -357,9 +381,12 @@
                 const orders = await api('/artisan/orders');
                 
                 // Filter by status if provided
-                const filteredOrders = statusFilter 
+                let filteredOrders = statusFilter 
                     ? orders.filter(order => order.status === statusFilter)
                     : orders;
+                
+                // Sort orders by status: Pending, Processing, Completed, Cancelled
+                filteredOrders = sortOrdersByStatus([...filteredOrders]);
                 
                 if (filteredOrders.length === 0) {
                     ordersList.innerHTML = `

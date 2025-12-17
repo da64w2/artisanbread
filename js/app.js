@@ -2,31 +2,55 @@
 
 // Always initialize base URL
 // Production: https://ccs4thyear.com/ArtisanBreads/Backend/public
-// Development: http://127.0.0.1:8000
-if (!window.BASE) {
-  // Check if we're on localhost (development) or production (GitHub Pages, custom domain, etc.)
-  const isLocalhost = window.location.hostname === 'localhost' || 
-                      window.location.hostname === '127.0.0.1' ||
-                      window.location.hostname.includes('192.168.') ||
-                      window.location.hostname.includes('10.0.');
-  
-  window.BASE = localStorage.getItem('BACKEND_BASE') || 
-    (isLocalhost 
-      ? 'http://127.0.0.1:8000'
-      : 'https://ccs4thyear.com/ArtisanBreads/Backend/public');
+(() => {
+  // If production is forced, wipe any saved custom base first
+  if (window.BACKEND_CONFIG && window.BACKEND_CONFIG.USE_PRODUCTION) {
+    localStorage.removeItem('BACKEND_BASE');
+  }
+
+  // Always prefer production base; ignore localhost defaults
+  window.BASE = 'https://ccs4thyear.com/ArtisanBreads/Backend/public';
+  localStorage.setItem('BACKEND_BASE', window.BASE);
+})();
+
+// Mobile/Cordova override: if a config helper exists, force base to it
+if (typeof window.getBackendURL === 'function') {
+  try {
+    const backendUrl = window.getBackendURL();
+    if (backendUrl) {
+      window.BASE = backendUrl.endsWith('/') ? backendUrl.slice(0, -1) : backendUrl;
+      localStorage.setItem('BACKEND_BASE', window.BASE);
+      console.log('📱 Cordova/backend config detected. BASE set to:', window.BASE);
+    }
+  } catch (e) {
+    console.warn('Could not apply Cordova backend override:', e);
+  }
+}
+
+// If production flag is set in config, always force production URL (helps when Cordova isn't detected yet)
+if (window.BACKEND_CONFIG && window.BACKEND_CONFIG.USE_PRODUCTION && window.BACKEND_CONFIG.PRODUCTION_URL) {
+  const prodUrl = window.BACKEND_CONFIG.PRODUCTION_URL.endsWith('/') 
+    ? window.BACKEND_CONFIG.PRODUCTION_URL.slice(0, -1) 
+    : window.BACKEND_CONFIG.PRODUCTION_URL;
+  window.BASE = prodUrl;
+  localStorage.setItem('BACKEND_BASE', window.BASE);
+  console.log('🌐 Production override applied from BACKEND_CONFIG. BASE set to:', window.BASE);
 }
 
 function setBase(url) {
-  if (!url) return;
-  // if only a port like "3000" or ":3000" passed, coerce to localhost
-  if (/^:?\d+$/.test(String(url))) url = `http://localhost:${String(url).replace(/^:/, '')}/`;
-  if (!/^https?:\/\//.test(url)) {
-    // allow "localhost:3000" -> "http://localhost:3000/"
-    url = 'http://' + url;
+  // In production, ignore any attempt to change the base URL
+  if (window.BACKEND_CONFIG && window.BACKEND_CONFIG.USE_PRODUCTION) {
+    const prod = (window.BACKEND_CONFIG.PRODUCTION_URL || 'https://ccs4thyear.com/ArtisanBreads/Backend/public').replace(/\/$/, '');
+    window.BASE = prod;
+    localStorage.setItem('BACKEND_BASE', prod);
+    return;
   }
-  if (!url.endsWith('/')) url += '/';
-  window.BASE = url;
-  localStorage.setItem('BACKEND_BASE', url);
+  // If ever needed in development, allow explicit full URLs only
+  if (!url) return;
+  if (!/^https?:\/\//.test(url)) return; // reject non-URLs/ports
+  const normalized = url.endsWith('/') ? url.slice(0, -1) : url;
+  window.BASE = normalized;
+  localStorage.setItem('BACKEND_BASE', normalized);
 }
 
 function getBase() {
@@ -295,17 +319,35 @@ function handleLogout() {
   };
 }
 
-// Desktop logout button
-const logoutBtn = document.getElementById('btnLogout');
-if (logoutBtn) {
-  logoutBtn.addEventListener('click', handleLogout());
+// Initialize logout handlers when DOM is ready
+function initializeLogoutHandlers() {
+  // Desktop logout button
+  const logoutBtn = document.getElementById('btnLogout');
+  if (logoutBtn && !logoutBtn.hasAttribute('data-logout-initialized')) {
+    logoutBtn.setAttribute('data-logout-initialized', 'true');
+    logoutBtn.addEventListener('click', handleLogout());
+    console.log('Desktop logout button handler attached');
+  }
+
+  // Mobile logout button
+  const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
+  if (mobileLogoutBtn && !mobileLogoutBtn.hasAttribute('data-logout-initialized')) {
+    mobileLogoutBtn.setAttribute('data-logout-initialized', 'true');
+    mobileLogoutBtn.addEventListener('click', handleLogout());
+    console.log('Mobile logout button handler attached');
+  }
 }
 
-// Mobile logout button
-const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
-if (mobileLogoutBtn) {
-  mobileLogoutBtn.addEventListener('click', handleLogout());
+// Initialize logout handlers when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeLogoutHandlers);
+} else {
+  // DOM is already loaded
+  initializeLogoutHandlers();
 }
+
+// Also try to initialize after a short delay to catch dynamically loaded pages
+setTimeout(initializeLogoutHandlers, 500);
 
 // Registration form handler
 const registerForm = document.getElementById('registerForm');
@@ -797,25 +839,36 @@ function setDefaultProfileImage() {
 }
 
 
-// Profile form handlers
-const infoForm = document.getElementById('infoForm');
-if (infoForm && !window.profileHandlersInitialized) {
-  window.profileHandlersInitialized = true;
-  console.log('Initializing profile handlers...');
-  setDefaultProfileImage(); // Set default image immediately
-  
-  // Load profile immediately if not already loaded
-  if (!window.profileLoaded && !window.profileLoading) {
-    console.log('Loading profile immediately...');
-    loadProfile();
-  }
-  
-  infoForm.addEventListener('submit', async (e) => {
+// Profile form handlers - initialize when DOM is ready
+function initializeProfileHandlers() {
+  const infoForm = document.getElementById('infoForm');
+  if (infoForm && !window.profileHandlersInitialized) {
+    window.profileHandlersInitialized = true;
+    console.log('Initializing profile handlers...');
+    setDefaultProfileImage(); // Set default image immediately
+    
+    // Load profile immediately if not already loaded
+    if (!window.profileLoaded && !window.profileLoading) {
+      console.log('Loading profile immediately...');
+      loadProfile();
+    }
+
+    // Enforce numeric-only contact number with 11-digit cap
+    const contactInput = document.getElementById('editContact');
+    if (contactInput) {
+      contactInput.setAttribute('maxlength', '11');
+      contactInput.addEventListener('input', () => {
+        const digitsOnly = (contactInput.value || '').replace(/\D/g, '').slice(0, 11);
+        contactInput.value = digitsOnly;
+      });
+    }
+    
+    infoForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const name = document.getElementById('editName')?.value?.trim();
     const email = document.getElementById('editEmail')?.value?.trim();
-    const contactNumber = document.getElementById('editContact')?.value?.trim();
+    const contactNumber = document.getElementById('editContact')?.value?.replace(/\D/g, '').slice(0, 11);
 
     if (!name) {
       await showAlert('Error', 'Name is required.', 'error');
@@ -827,6 +880,11 @@ if (infoForm && !window.profileHandlersInitialized) {
       return;
     }
 
+    if (contactNumber && !/^\d{11}$/.test(contactNumber)) {
+      await showAlert('Error', 'Contact number must be exactly 11 digits.', 'error');
+      return;
+    }
+
     const payload = { 
       name, 
       email, 
@@ -834,59 +892,109 @@ if (infoForm && !window.profileHandlersInitialized) {
     };
 
     try {
-      await api('/users/me', { method: 'PUT', data: payload });
+      console.log('Updating profile with payload:', payload);
+      const response = await api('/users/me', { method: 'PUT', data: payload });
+      console.log('Profile update response:', response);
+      
+      // Update display name immediately
+      const nameEl = document.getElementById('profileName');
+      if (nameEl) {
+        nameEl.textContent = name || 'No Name Set';
+      }
+      
+      // Update username display if available
+      const usernameEl = document.getElementById('profileUsername');
+      if (usernameEl && response?.username) {
+        usernameEl.textContent = '@' + response.username;
+      }
+      
       await showAlert('Success', 'Profile updated successfully!', 'success');
-      // Don't reload profile to avoid fallback loops - form fields are already updated
+      
+      // Reload profile to ensure everything is in sync (with delay to avoid race conditions)
+      setTimeout(async () => {
+        window.profileLoaded = false;
+        await loadProfile();
+      }, 500);
     } catch (err) {
       console.error('Update profile error:', err);
-      const message = err?.message || 'Failed to update profile';
-      await showAlert('Error', message, 'error');
+      console.error('Error details:', {
+        message: err?.message,
+        status: err?.status,
+        response: err?.response
+      });
+      
+      let errorMessage = 'Failed to update profile';
+      if (err?.response?.message) {
+        errorMessage = err.response.message;
+      } else if (err?.message) {
+        errorMessage = err.message;
+      } else if (err?.response?.errors) {
+        // Handle Laravel validation errors
+        const errors = err.response.errors;
+        errorMessage = Object.values(errors).flat().join(', ');
+      }
+      
+      await showAlert('Error', errorMessage, 'error');
     }
-  });
-} else {
-  // Check if this is a public page that shouldn't load profile
-  const publicPages = ['register.html', 'login.html', 'forgot-password.html', 'reset-password.html', 'verify-email.html'];
-  const currentPage = window.location.pathname.split('/').pop();
-  
-  if (publicPages.includes(currentPage)) {
-    console.log('Public page detected, skipping profile loading:', currentPage);
-    // Only set default image for public pages, don't load profile
-    setDefaultProfileImage();
+    });
   } else {
-    // If no profile form exists, still set default image and load profile (for direct page access)
-    console.log('No profile form found, setting default image and loading profile...');
-    setDefaultProfileImage();
+    // Check if this is a public page that shouldn't load profile
+    const publicPages = ['register.html', 'login.html', 'forgot-password.html', 'reset-password.html', 'verify-email.html'];
+    const currentPage = window.location.pathname.split('/').pop();
     
-    // Load profile immediately if not already loaded
-    if (!window.profileLoaded && !window.profileLoading) {
-      console.log('Loading profile immediately (no form case)...');
-      loadProfile();
+    if (publicPages.includes(currentPage)) {
+      console.log('Public page detected, skipping profile loading:', currentPage);
+      // Only set default image for public pages, don't load profile
+      setDefaultProfileImage();
+    } else {
+      // If no profile form exists, still set default image and load profile (for direct page access)
+      console.log('No profile form found, setting default image and loading profile...');
+      setDefaultProfileImage();
+      
+      // Load profile immediately if not already loaded
+      if (!window.profileLoaded && !window.profileLoading) {
+        console.log('Loading profile immediately (no form case)...');
+        loadProfile();
+      }
     }
   }
 }
 
-const photoForm = document.getElementById('photoForm');
-if (photoForm) {
-  // Handle file input change for preview
-  const fileInput = photoForm.querySelector('input[type="file"]');
-  if (fileInput) {
-    fileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const profileImage = document.getElementById('profileImage');
-          if (profileImage) {
-            profileImage.src = e.target.result;
-            console.log('Profile image preview updated');
-          }
-        };
-        reader.readAsDataURL(file);
-      }
-    });
-  }
+// Initialize profile handlers when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeProfileHandlers);
+} else {
+  // DOM is already loaded
+  initializeProfileHandlers();
+}
 
-  photoForm.addEventListener('submit', async (e) => {
+// Initialize photo form handler when DOM is ready
+function initializePhotoForm() {
+  const photoForm = document.getElementById('photoForm');
+  if (photoForm && !photoForm.hasAttribute('data-photo-form-initialized')) {
+    photoForm.setAttribute('data-photo-form-initialized', 'true');
+    console.log('Initializing photo form handler...');
+    
+    // Handle file input change for preview
+    const fileInput = photoForm.querySelector('input[type="file"]');
+    if (fileInput) {
+      fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const profileImage = document.getElementById('profileImage');
+            if (profileImage) {
+              profileImage.src = e.target.result;
+              console.log('Profile image preview updated');
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    photoForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const fileInput = photoForm.querySelector('input[type="file"]');
@@ -939,15 +1047,23 @@ if (photoForm) {
 
       console.log('Avatar upload response:', response);
 
-      // Update profile image immediately with improved fetching
+      // Update profile image immediately - check multiple possible response fields
       const profileImage = document.getElementById('profileImage');
-      if (profileImage && response.profilePic) {
-        console.log('Avatar upload response:', response);
-        await updateProfileImage(profileImage, response.profilePic);
+      if (profileImage) {
+        // Try different possible response field names
+        const imagePath = response.profilePic || response.profile_pic || response.avatar || response.image_path || response.data?.profilePic || response.data?.profile_pic;
+        
+        if (imagePath) {
+          console.log('Updating profile image with path:', imagePath);
+          await updateProfileImage(profileImage, imagePath);
+        } else {
+          // If no path in response, reload profile to get updated image
+          console.log('No image path in response, reloading profile...');
+          // Reset profile loaded flag to force reload
+          window.profileLoaded = false;
+          await loadProfile();
+        }
       }
-
-      // Don't reload profile to avoid fallback loops
-      // Profile is already loaded and image is updated above
 
       await showAlert('Success', 'Profile photo updated successfully!', 'success');
       photoForm.reset();
@@ -970,8 +1086,20 @@ if (photoForm) {
       console.error('Final error message:', errorMessage);
       await showAlert('Error', errorMessage, 'error');
     }
-  });
+    });
+  }
 }
+
+// Initialize photo form handler when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializePhotoForm);
+} else {
+  // DOM is already loaded
+  initializePhotoForm();
+}
+
+// Also try to initialize after a short delay to catch dynamically loaded pages
+setTimeout(initializePhotoForm, 500);
 
 const passwordForm = document.getElementById('passwordForm');
 if (passwordForm) {
@@ -1598,49 +1726,50 @@ async function loadCart() {
         const stockText = stockQty === 0 ? 'Out of Stock' : `${stockQty} left`;
         
         return `
-          <div class="p-6 flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6 hover:bg-gray-50 transition-colors">
-            <div class="flex items-center">
-              <input type="checkbox" 
-                     class="cart-item-checkbox w-5 h-5 text-amber-600 rounded focus:ring-amber-500 mr-4" 
-                     data-cart-id="${item.id}"
-                     data-price="${item.bread.price}"
-                     data-quantity="${item.quantity}"
-                     checked
-                     onchange="updateCartTotal()">
-            </div>
-            <div class="relative w-24 h-24">
+          <div class="p-3 md:p-4 flex items-center gap-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0">
+            <input type="checkbox" 
+                   class="cart-item-checkbox w-4 h-4 md:w-5 md:h-5 text-amber-600 rounded focus:ring-amber-500 flex-shrink-0" 
+                   data-cart-id="${item.id}"
+                   data-price="${item.bread.price}"
+                   data-quantity="${item.quantity}"
+                   checked
+                   onchange="updateCartTotal()">
+            <div class="relative w-16 h-16 md:w-20 md:h-20 flex-shrink-0">
               <div class="image-loading-spinner"></div>
               <img src="${imgUrl}" 
                    alt="${item.bread.name}" 
-                   class="w-24 h-24 object-cover rounded-lg shadow"
+                   class="w-16 h-16 md:w-20 md:h-20 object-cover rounded-md shadow-sm"
                    onload="this.classList.add('loaded'); this.parentElement.querySelector('.image-loading-spinner')?.classList.add('hidden');"
                    onerror="this.classList.add('loaded'); this.parentElement.querySelector('.image-loading-spinner')?.classList.add('hidden'); this.src='${new URL('uploads/bread.png', imgBase).toString()}'">
             </div>
-            <div class="flex-1 w-full md:w-auto">
-              <h3 class="text-lg font-bold text-gray-800 mb-1">${item.bread.name}</h3>
-              <p class="text-gray-600 mb-2">₱${parseFloat(item.bread.price || 0).toFixed(2)} each</p>
-              <p class="text-sm ${stockClass} mb-1">
+            <div class="flex-1 min-w-0">
+              <h3 class="text-sm md:text-base font-semibold text-gray-800 mb-0.5 truncate">${item.bread.name}</h3>
+              <p class="text-xs md:text-sm text-gray-600 mb-1">₱${parseFloat(item.bread.price || 0).toFixed(2)} each</p>
+              <p class="text-xs ${stockClass} mb-1">
                 <i class="fas fa-box mr-1"></i>${stockText}
               </p>
-              <p class="text-sm text-gray-500">Subtotal: ₱${parseFloat(item.subtotal || 0).toFixed(2)}</p>
+              <p class="text-xs md:text-sm font-medium text-gray-800">Subtotal: ₱${parseFloat(item.subtotal || 0).toFixed(2)}</p>
             </div>
-            <div class="flex items-center space-x-3">
-              <button onclick="updateCartQuantity(${item.id}, ${item.quantity - 1})" 
-                      ${item.quantity <= 1 ? 'disabled' : ''}
-                      class="${item.quantity <= 1 ? 'w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-400 rounded-full cursor-not-allowed' : 'w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded-full transition-colors'}">
-                <i class="fas fa-minus text-xs"></i>
-              </button>
-              <span class="text-lg font-semibold w-8 text-center">${item.quantity}</span>
-              <button onclick="updateCartQuantity(${item.id}, ${item.quantity + 1})" 
-                      ${stockQty <= item.quantity ? 'disabled' : ''}
-                      class="${stockQty <= item.quantity ? 'w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-400 rounded-full cursor-not-allowed' : 'w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded-full transition-colors'}">
-                <i class="fas fa-plus text-xs"></i>
+            <div class="flex flex-col items-center gap-2 flex-shrink-0">
+              <div class="flex items-center gap-1.5">
+                <button onclick="updateCartQuantity(${item.id}, ${item.quantity - 1})" 
+                        ${item.quantity <= 1 ? 'disabled' : ''}
+                        class="${item.quantity <= 1 ? 'w-7 h-7 flex items-center justify-center bg-gray-100 text-gray-400 rounded cursor-not-allowed' : 'w-7 h-7 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded transition-colors'}">
+                  <i class="fas fa-minus text-xs"></i>
+                </button>
+                <span class="text-sm md:text-base font-semibold w-6 text-center">${item.quantity}</span>
+                <button onclick="updateCartQuantity(${item.id}, ${item.quantity + 1})" 
+                        ${stockQty <= item.quantity ? 'disabled' : ''}
+                        class="${stockQty <= item.quantity ? 'w-7 h-7 flex items-center justify-center bg-gray-100 text-gray-400 rounded cursor-not-allowed' : 'w-7 h-7 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded transition-colors'}">
+                  <i class="fas fa-plus text-xs"></i>
+                </button>
+              </div>
+              <button onclick="removeFromCart(${item.id})" 
+                      class="text-red-600 hover:text-red-800 transition-colors p-1.5 rounded hover:bg-red-50"
+                      title="Remove">
+                <i class="fas fa-trash text-xs md:text-sm"></i>
               </button>
             </div>
-            <button onclick="removeFromCart(${item.id})" 
-                    class="text-red-600 hover:text-red-800 transition-colors px-4 py-2 rounded-lg hover:bg-red-50">
-              <i class="fas fa-trash mr-2"></i>Remove
-            </button>
           </div>
         `;
       }).join('');
@@ -1965,16 +2094,22 @@ function applyOrderFilters() {
                   </div>
                 `).join('') : '<p class="text-gray-500">No items found</p>'}
               </div>
-              ${order.status === 'pending' ? `
-                <button onclick="cancelOrder(${order.id})" 
-                        class="mt-4 text-red-600 hover:text-red-800 font-semibold transition-colors">
-                  <i class="fas fa-times-circle mr-2"></i>Cancel Order
+              <div class="flex gap-2 mt-4">
+                <button onclick="viewOrderDetails(${order.id})" 
+                        class="flex-1 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+                  <i class="fas fa-eye mr-2"></i>View Details
                 </button>
-              ` : ''}
+                ${order.status === 'pending' ? `
+                  <button onclick="cancelOrder(${order.id})" 
+                          class="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+                    <i class="fas fa-times-circle mr-2"></i>Cancel
+                  </button>
+                ` : ''}
+              </div>
             </div>
           </div>
         `;
-    }).join('');
+      }).join('');
   }
 }
 

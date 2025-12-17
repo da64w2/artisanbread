@@ -14,7 +14,12 @@
     <nav class="bg-white shadow-lg sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4">
             <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-2">
+                    <a href="index.html" class="flex items-center space-x-2">
+                        <img src="images/logo.svg" alt="Artisan Bread Logo" class="h-10 w-auto">
                 <h1 class="text-2xl font-bold text-gray-800">My Orders</h1>
+                    </a>
+                </div>
                 <div class="flex items-center space-x-4">
                     <a href="products.html" class="text-gray-600 hover:text-amber-600">Shop</a>
                     <a href="cart.html" class="text-gray-600 hover:text-amber-600 relative">
@@ -88,6 +93,19 @@
         </div>
     </div>
 
+    <!-- Order Details Modal -->
+    <div id="orderDetailsModal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50 px-4">
+        <div class="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-lg">
+            <div class="flex justify-between items-center px-6 py-4 border-b sticky top-0 bg-white">
+                <h3 class="text-xl font-semibold text-gray-800">Order Details</h3>
+                <button id="btnCloseOrderDetails" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            <div id="orderDetailsContent" class="p-6">
+                <!-- Order details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
     <script src="js/app.js"></script>
     <script>
         $(document).ready(function() {
@@ -137,7 +155,149 @@
                     }
                 });
             }
+
+            // Close order details modal
+            $('#btnCloseOrderDetails').click(function() {
+                $('#orderDetailsModal').addClass('hidden').removeClass('flex');
+            });
+
+            // Close modal when clicking outside
+            $('#orderDetailsModal').click(function(e) {
+                if ($(e.target).attr('id') === 'orderDetailsModal') {
+                    $(this).addClass('hidden').removeClass('flex');
+                }
+            });
         });
+
+        // View order details function
+        async function viewOrderDetails(orderId) {
+            const modal = $('#orderDetailsModal');
+            const content = $('#orderDetailsContent');
+            
+            modal.removeClass('hidden').addClass('flex');
+            content.html(`
+                <div class="text-center py-8">
+                    <i class="fas fa-spinner fa-spin text-4xl text-amber-600 mb-4"></i>
+                    <p class="text-gray-600">Loading order details...</p>
+                </div>
+            `);
+
+            try {
+                const order = await api(`/orders/${orderId}`);
+                
+                const statusColors = {
+                    'completed': 'bg-green-100 text-green-800 border-green-300',
+                    'cancelled': 'bg-red-100 text-red-800 border-red-300',
+                    'pending': 'bg-yellow-100 text-yellow-800 border-yellow-300',
+                    'processing': 'bg-blue-100 text-blue-800 border-blue-300'
+                };
+                const statusClass = statusColors[order.status] || 'bg-gray-100 text-gray-800 border-gray-300';
+                
+                const orderDate = order.created_at ? new Date(order.created_at).toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }) : 'Date not available';
+
+                const paymentMethodLabels = {
+                    'cash_on_delivery': 'Cash on Delivery',
+                    'gcash': 'GCash',
+                    'maya': 'Maya',
+                    'credit_card': 'Credit Card',
+                    'debit_card': 'Debit Card',
+                    'paypal': 'PayPal'
+                };
+
+                const shippingMethodLabels = {
+                    'pickup': 'Pickup',
+                    'delivery': 'Delivery'
+                };
+
+                content.html(`
+                    <div class="space-y-6">
+                        <!-- Order Header -->
+                        <div class="bg-amber-50 rounded-lg p-4 border border-amber-200">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <h4 class="text-lg font-bold text-gray-800">Order #${order.id}</h4>
+                                    <p class="text-sm text-gray-600 mt-1">
+                                        <i class="fas fa-calendar-alt mr-1"></i>${orderDate}
+                                    </p>
+                                </div>
+                                <span class="px-3 py-1 rounded-full text-sm font-semibold border-2 ${statusClass}">
+                                    ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                                </span>
+                            </div>
+                            <p class="text-2xl font-bold text-amber-600 mt-2">₱${parseFloat(order.total_amount || 0).toFixed(2)}</p>
+                        </div>
+
+                        <!-- Shipping Address -->
+                        <div class="bg-white border rounded-lg p-4">
+                            <h5 class="font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-map-marker-alt mr-2 text-amber-600"></i>Shipping Address
+                            </h5>
+                            <p class="text-gray-700">${order.shipping_address || 'Not provided'}</p>
+                        </div>
+
+                        <!-- Payment & Shipping Info -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-white border rounded-lg p-4">
+                                <h5 class="font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-credit-card mr-2 text-amber-600"></i>Payment Method
+                                </h5>
+                                <p class="text-gray-700">${paymentMethodLabels[order.payment_method] || order.payment_method}</p>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    Status: <span class="font-semibold ${order.payment_status === 'paid' ? 'text-green-600' : 'text-yellow-600'}">
+                                        ${order.payment_status === 'paid' ? 'Paid' : 'Pending'}
+                                    </span>
+                                </p>
+                            </div>
+                            <div class="bg-white border rounded-lg p-4">
+                                <h5 class="font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-truck mr-2 text-amber-600"></i>Shipping Method
+                                </h5>
+                                <p class="text-gray-700">${shippingMethodLabels[order.shipping_method] || order.shipping_method}</p>
+                            </div>
+                        </div>
+
+                        <!-- Order Items -->
+                        <div class="bg-white border rounded-lg p-4">
+                            <h5 class="font-semibold text-gray-700 mb-3">
+                                <i class="fas fa-shopping-bag mr-2 text-amber-600"></i>Order Items
+                            </h5>
+                            <div class="space-y-3">
+                                ${order.items && order.items.length > 0 ? order.items.map(item => `
+                                    <div class="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+                                        <div class="flex-1">
+                                            <span class="font-medium text-gray-800">${item.bread ? item.bread.name : 'Unknown Item'}</span>
+                                            <span class="text-gray-500 ml-2">x${item.quantity || 0}</span>
+                                            <p class="text-sm text-gray-500 mt-1">₱${parseFloat(item.price || 0).toFixed(2)} each</p>
+                                        </div>
+                                        <span class="font-semibold text-gray-700">₱${parseFloat(item.subtotal || 0).toFixed(2)}</span>
+                                    </div>
+                                `).join('') : '<p class="text-gray-500">No items found</p>'}
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-gray-200">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-lg font-semibold text-gray-800">Total:</span>
+                                    <span class="text-2xl font-bold text-amber-600">₱${parseFloat(order.total_amount || 0).toFixed(2)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `);
+            } catch (err) {
+                content.html(`
+                    <div class="text-center py-8">
+                        <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
+                        <p class="text-gray-600">Failed to load order details</p>
+                        <p class="text-sm text-gray-500 mt-2">${err.message || 'Please try again later.'}</p>
+                    </div>
+                `);
+            }
+        }
     </script>
 </body>
 </html>

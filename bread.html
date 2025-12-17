@@ -7,8 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
-    <script src="lib/sweetalert2.min.js"></script>
     <script src="lib/jquery.min.js"></script>
+    <script src="lib/sweetalert2.min.js"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <!-- Navigation -->
@@ -16,10 +16,10 @@
         <div class="max-w-7xl mx-auto px-4">
             <div class="flex justify-between items-center py-4">
                 <div class="flex items-center space-x-2">
-                    <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full flex items-center justify-center">
-                        <i class="fas fa-bread-slice text-white text-lg"></i>
-                    </div>
+                    <a href="index.html" class="flex items-center space-x-2">
+                        <img src="images/logo.svg" alt="Artisan Bread Logo" class="h-10 w-auto">
                     <h1 class="text-2xl font-bold text-gray-800">Artisan Bread</h1>
+                    </a>
                 </div>
                 
                 <div class="hidden md:flex items-center space-x-6">
@@ -777,15 +777,11 @@
             window.loadArtisanOrders = loadArtisanOrders;
             window.updateOrderStatus = updateOrderStatus;
             window.deleteBread = deleteBread;
-            window.viewOrderDetails = viewOrderDetails;
             window.openAddBreadModal = openAddBreadModal;
+            window.viewOrderDetails = viewOrderDetails;
             window.closeAddBreadModal = closeAddBreadModal;
             window.switchTab = switchTab;
         });
     </script>
 </body>
 </html>
-
-
-
-
